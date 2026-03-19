@@ -92,7 +92,14 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # ─── STATIQUES ────────────────────────────────────────────────────────────────
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# N'ajouter le dossier static/ que s'il existe (évite le warning sur Render)
+_STATIC_DIR = BASE_DIR / 'static'
+if _STATIC_DIR.exists():
+    STATICFILES_DIRS = [_STATIC_DIR]
+else:
+    STATICFILES_DIRS = []
+
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
@@ -109,11 +116,11 @@ MONTHLY_PRICE_ID      = os.environ.get('MONTHLY_PRICE_ID', 'price_xxx')
 YEARLY_PRICE_ID       = os.environ.get('YEARLY_PRICE_ID', 'price_xxx')
 
 # ─── DIVERS ───────────────────────────────────────────────────────────────────
-TRIAL_DAYS       = int(os.environ.get('TRIAL_DAYS', 21))
-EMAIL_BACKEND    = 'django.core.mail.backends.console.EmailBackend'
+TRIAL_DAYS        = int(os.environ.get('TRIAL_DAYS', 21))
+EMAIL_BACKEND     = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'noreply@siteforge.io'
-MAIN_DOMAIN      = os.environ.get('MAIN_DOMAIN', 'localhost:8000')
+MAIN_DOMAIN       = os.environ.get('MAIN_DOMAIN', 'localhost:8000')
 
-SESSION_ENGINE   = 'django.contrib.sessions.backends.db'
-MESSAGE_STORAGE  = 'django.contrib.messages.storage.session.SessionStorage'
-X_FRAME_OPTIONS  = 'SAMEORIGIN'
+SESSION_ENGINE    = 'django.contrib.sessions.backends.db'
+MESSAGE_STORAGE   = 'django.contrib.messages.storage.session.SessionStorage'
+X_FRAME_OPTIONS   = 'SAMEORIGIN'
