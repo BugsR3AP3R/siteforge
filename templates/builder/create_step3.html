@@ -1,0 +1,134 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}Nouveau site — Configuration{% endblock %}
+{% block page_title %}Configurer votre site{% endblock %}
+{% block topbar_actions %}{% endblock %}
+
+{% block content %}
+<div class="wizard-header animate-fade">
+  <div class="wizard-steps">
+    <a href="{% url 'builder:create_step1' %}" class="wstep done"><span><i class="fa-solid fa-check" style="font-size:.7rem"></i></span> Type de site</a>
+    <div class="wstep-line"></div>
+    <a href="{% url 'builder:create_step2' site_type %}" class="wstep done"><span><i class="fa-solid fa-check" style="font-size:.7rem"></i></span> Design</a>
+    <div class="wstep-line"></div>
+    <div class="wstep active"><span>3</span> Configuration</div>
+  </div>
+  <a href="{% url 'builder:create_step2' site_type %}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-arrow-left"></i> Retour</a>
+</div>
+
+<div class="wizard-content animate-fade" style="animation-delay:.05s">
+  <div class="wizard-title">
+    <h2>Configurez votre site <span style="color:var(--accent)">{{ site_type_label }}</span></h2>
+    <p>Vous pourrez modifier tous ces paramètres plus tard</p>
+  </div>
+
+  <div class="config-layout">
+    <div class="config-form">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-card">
+          <h4><i class="fa-solid fa-pen"></i> Informations du site</h4>
+          <div class="form-group">
+            <label class="form-label">Nom du site *</label>
+            <input type="text" name="name" class="form-input" placeholder="Mon super portfolio" required autofocus>
+            <span class="form-hint">Ce nom apparaîtra dans l'onglet du navigateur et le dashboard</span>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <h4><i class="fa-solid fa-globe"></i> Nom de domaine</h4>
+          <div class="domain-options">
+            <div class="domain-opt">
+              <div class="domain-free">
+                <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
+                <div>
+                  <strong>Sous-domaine SiteForge gratuit</strong>
+                  <span>votresite<strong>.siteforge.io</strong></span>
+                </div>
+                <span class="badge badge-active">Inclus</span>
+              </div>
+            </div>
+            <div class="domain-divider">
+              <span>et / ou</span>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">
+                <i class="fa-solid fa-link"></i> Votre domaine personnalisé
+                <span class="form-label-badge">Optionnel</span>
+              </label>
+              <div class="domain-input-wrap">
+                <span class="domain-prefix">https://</span>
+                <input type="text" name="custom_domain" class="form-input domain-input" placeholder="monsite.com">
+              </div>
+              <span class="form-hint">Vous devrez configurer un enregistrement CNAME chez votre registrar. Des instructions vous seront fournies.</span>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg w-full">
+          <i class="fa-solid fa-rocket"></i> Créer mon site et ouvrir l'éditeur
+        </button>
+      </form>
+    </div>
+
+    <div class="config-info">
+      <div class="info-card">
+        <h4><i class="fa-solid fa-circle-info"></i> Ce qui sera créé</h4>
+        <div class="info-items">
+          <div class="info-item"><i class="fa-solid fa-check" style="color:var(--success)"></i> Une page d'accueil avec sections pré-configurées</div>
+          <div class="info-item"><i class="fa-solid fa-check" style="color:var(--success)"></i> Design {{ site_type_label }} prêt à personnaliser</div>
+          <div class="info-item"><i class="fa-solid fa-check" style="color:var(--success)"></i> Sous-domaine siteforge.io immédiat</div>
+          <div class="info-item"><i class="fa-solid fa-check" style="color:var(--success)"></i> Accès direct à l'éditeur visuel</div>
+        </div>
+      </div>
+      <div class="info-card domain-help">
+        <h4><i class="fa-solid fa-question-circle"></i> Comment connecter mon domaine ?</h4>
+        <ol class="domain-steps">
+          <li>Entrez votre nom de domaine ci-contre</li>
+          <li>Allez dans votre registrar (OVH, Namecheap…)</li>
+          <li>Ajoutez un enregistrement CNAME pointant vers <code>sites.siteforge.io</code></li>
+          <li>Vérifiez depuis le dashboard → Gérer le site</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.wizard-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:36px; flex-wrap:wrap; gap:12px; }
+.wizard-steps { display:flex; align-items:center; gap:0; }
+.wstep { display:flex; align-items:center; gap:8px; font-size:.85rem; font-weight:600; color:var(--muted); white-space:nowrap; text-decoration:none; }
+.wstep.active { color:var(--accent); }
+.wstep.done { color:var(--success); }
+.wstep span { width:28px; height:28px; border-radius:50%; border:2px solid currentColor; display:flex; align-items:center; justify-content:center; font-size:.8rem; }
+.wstep-line { flex:1; height:1px; background:var(--border); min-width:40px; margin:0 12px; }
+.wizard-content { max-width:900px; }
+.wizard-title { margin-bottom:32px; }
+.wizard-title h2 { font-size:1.4rem; margin-bottom:8px; }
+.wizard-title p { color:var(--text2); }
+.config-layout { display:grid; grid-template-columns:1fr 340px; gap:24px; }
+.form-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:16px; }
+.form-card h4 { display:flex; align-items:center; gap:8px; font-size:.95rem; margin-bottom:20px; color:var(--text2); }
+.form-hint { font-size:.78rem; color:var(--muted); margin-top:6px; display:block; }
+.form-label-badge { font-size:.72rem; background:var(--surface2); color:var(--muted); padding:2px 8px; border-radius:4px; margin-left:8px; font-weight:400; }
+.domain-options { display:flex; flex-direction:column; gap:16px; }
+.domain-free { display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(46,213,115,.05); border:1px solid rgba(46,213,115,.15); border-radius:var(--radius-sm); }
+.domain-free i { font-size:1.1rem; flex-shrink:0; }
+.domain-free div { flex:1; display:flex; flex-direction:column; }
+.domain-free div strong { font-size:.88rem; margin-bottom:2px; }
+.domain-free div span { font-size:.8rem; color:var(--text2); }
+.domain-divider { display:flex; align-items:center; gap:12px; }
+.domain-divider::before, .domain-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.domain-divider span { font-size:.8rem; color:var(--muted); white-space:nowrap; }
+.domain-input-wrap { display:flex; }
+.domain-prefix { display:flex; align-items:center; padding:0 12px; background:var(--surface3); border:1px solid var(--border); border-right:none; border-radius:var(--radius-sm) 0 0 var(--radius-sm); font-size:.85rem; color:var(--muted); white-space:nowrap; }
+.domain-input { border-radius:0 var(--radius-sm) var(--radius-sm) 0; }
+.info-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+.info-card h4 { display:flex; align-items:center; gap:8px; font-size:.9rem; margin-bottom:16px; color:var(--text2); }
+.info-items { display:flex; flex-direction:column; gap:10px; }
+.info-item { display:flex; align-items:flex-start; gap:8px; font-size:.85rem; color:var(--text2); }
+.domain-steps { padding-left:20px; display:flex; flex-direction:column; gap:8px; font-size:.83rem; color:var(--text2); }
+.domain-steps li { padding-left:4px; }
+code { background:var(--surface2); padding:2px 6px; border-radius:4px; font-size:.82rem; color:var(--accent); }
+@media(max-width:768px) { .config-layout { grid-template-columns:1fr; } }
+</style>
+{% endblock %}

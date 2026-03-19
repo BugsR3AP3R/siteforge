@@ -1,0 +1,30 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}Abonnement — SiteForge{% endblock %}
+{% block page_title %}Activer mon abonnement{% endblock %}
+{% block content %}
+<div style="max-width:600px">
+  <div class="card" style="text-align:center;padding:48px;margin-bottom:24px">
+    <i class="fa-solid fa-bolt" style="font-size:2.5rem;color:var(--accent);margin-bottom:20px;display:block"></i>
+    <h2 style="margin-bottom:8px">Choisissez votre plan</h2>
+    <p style="color:var(--text2);margin-bottom:32px">Continuez à créer des sites après votre essai gratuit</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <form method="post">{% csrf_token %}<input type="hidden" name="plan" value="monthly">
+        <div class="plan-pick"><strong>Mensuel</strong><div class="pp-price">9,99€<span>/mois</span></div>
+        <button type="submit" class="btn btn-secondary w-full">Choisir</button></div>
+      </form>
+      <form method="post">{% csrf_token %}<input type="hidden" name="plan" value="yearly">
+        <div class="plan-pick featured"><div class="pp-best">✨ -20%</div><strong>Annuel</strong><div class="pp-price">7,99€<span>/mois</span></div>
+        <button type="submit" class="btn btn-primary w-full">Choisir</button></div>
+      </form>
+    </div>
+    <p style="margin-top:20px;font-size:.8rem;color:var(--muted)"><i class="fa-solid fa-shield-check"></i> Paiement sécurisé via Stripe · Annulation à tout moment</p>
+  </div>
+</div>
+<style>
+.plan-pick { background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:12px;position:relative }
+.plan-pick.featured { border-color:rgba(108,99,255,.4);background:rgba(108,99,255,.04) }
+.pp-best { position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:.7rem;font-weight:700;padding:3px 12px;border-radius:100px;white-space:nowrap }
+.pp-price { font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800 }
+.pp-price span { font-size:.8rem;font-family:'DM Sans',sans-serif;color:var(--text2);font-weight:400 }
+</style>
+{% endblock %}

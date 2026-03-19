@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="{% url 'dashboard:home' %}" class="logo">Site<span>Forge</span></a>
+      <button class="sidebar-close" onclick="toggleSidebar()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    {% if request.user.active_subscription %}
+    <div class="trial-banner">
+      {% if request.user.is_on_trial %}
+        <div class="trial-info">
+          <i class="fa-solid fa-hourglass-half"></i>
+          <div>
+            <strong>Essai gratuit</strong>
+            <span>{{ request.user.trial_days_left }} jours restants</span>
+          </div>
+        </div>
+        <a href="{% url 'billing:subscribe' %}" class="btn btn-primary btn-sm w-full">Activer mon abonnement</a>
+      {% else %}
+        <div class="trial-info">
+          <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
+          <div>
+            <strong>Abonnement actif</strong>
+            <span style="color:var(--success)">{{ request.user.active_subscription.plan }}</span>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <span class="nav-label">Principal</span>
+        <a href="{% url 'dashboard:home' %}" class="nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+          <i class="fa-solid fa-house"></i> Dashboard
+        </a>
+        <a href="{% url 'builder:create_step1' %}" class="nav-item create-btn">
+          <i class="fa-solid fa-plus"></i> Nouveau site
+        </a>
+      </div>
+      {% if request.user.sites.count > 0 %}
+      <div class="nav-section">
+        <span class="nav-label">Mes sites</span>
+        {% for site in request.user.sites.all|slice:":5" %}
+        <a href="{% url 'dashboard:site_detail' site.id %}" class="nav-item site-nav-item">
+          <span class="site-type-dot site-type-{{ site.site_type }}"></span>
+          <span class="nav-site-name">{{ site.name|truncatechars:22 }}</span>
+          <span class="badge badge-{{ site.status }} nav-badge">{{ site.get_status_display }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div class="nav-section">
+        <span class="nav-label">Compte</span>
+        <a href="{% url 'billing:home' %}" class="nav-item {% if 'billing' in request.path %}active{% endif %}">
+          <i class="fa-solid fa-credit-card"></i> Facturation
+        </a>
+        <a href="{% url 'accounts:profile' %}" class="nav-item {% if 'profile' in request.path %}active{% endif %}">
+          <i class="fa-solid fa-user-circle"></i> Mon profil
+        </a>
+        <a href="{% url 'accounts:logout' %}" class="nav-item nav-logout">
+          <i class="fa-solid fa-right-from-bracket"></i> Déconnexion
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-user">
+      {% if request.user.avatar %}
+        <img src="{{ request.user.avatar.url }}" class="user-avatar" alt="">
+      {% else %}
+        <div class="user-avatar-default">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
+      {% endif %}
+      <div class="user-info">
+        <strong>{{ request.user.full_name|truncatechars:20 }}</strong>
+        <span>{{ request.user.email|truncatechars:24 }}</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- OVERLAY -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="topbar">
+      <button class="topbar-menu" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+      <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+      <div class="topbar-actions">
+        {% block topbar_actions %}
+        <a href="{% url 'builder:create_step1' %}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-plus"></i> Nouveau site
+        </a>
+        {% endblock %}
+      </div>
+    </header>
+    <div class="page-content">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+
+<style>
+.app-layout { display:flex; min-height:100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  width:260px; min-height:100vh; background:var(--surface); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; position:fixed; left:0; top:0; z-index:200;
+  transition:transform .3s ease;
+}
+.sidebar-header { display:flex; align-items:center; justify-content:space-between; padding:20px 20px 16px; border-bottom:1px solid var(--border); }
+.logo { font-family:'Syne',sans-serif; font-weight:800; font-size:1.35rem; letter-spacing:-.02em; }
+.logo span { color:var(--accent); }
+.sidebar-close { display:none; background:none; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; }
+
+.trial-banner { margin:12px; padding:14px; background:rgba(247,151,30,.05); border:1px solid rgba(247,151,30,.2); border-radius:var(--radius-sm); }
+.trial-info { display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:.85rem; }
+.trial-info i { font-size:1.1rem; color:var(--accent4); }
+.trial-info div { display:flex; flex-direction:column; }
+.trial-info span { color:var(--text2); font-size:.78rem; margin-top:1px; }
+
+.sidebar-nav { flex:1; padding:8px 12px; overflow-y:auto; }
+.nav-section { margin-bottom:24px; }
+.nav-label { display:block; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); padding:0 8px; margin-bottom:6px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); color:var(--text2); font-size:.88rem; font-weight:500; transition:all .15s; margin-bottom:2px; }
+.nav-item:hover { background:var(--surface2); color:var(--text); }
+.nav-item.active { background:rgba(108,99,255,.12); color:var(--accent); }
+.nav-item i { width:16px; text-align:center; font-size:.9rem; }
+.nav-item.create-btn { background:rgba(108,99,255,.08); color:var(--accent); border:1px dashed rgba(108,99,255,.3); }
+.nav-item.create-btn:hover { background:rgba(108,99,255,.15); }
+.nav-item.nav-logout:hover { color:var(--danger); }
+.site-nav-item { justify-content:flex-start; }
+.site-type-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.site-type-portfolio { background:#6c63ff; }
+.site-type-ecommerce { background:#43e97b; }
+.site-type-eshop { background:#f7971e; }
+.site-type-eart { background:#ff6584; }
+.site-type-blog { background:#58a6ff; }
+.nav-site-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nav-badge { font-size:.65rem; padding:2px 6px; flex-shrink:0; }
+
+.sidebar-user { display:flex; align-items:center; gap:10px; padding:16px 20px; border-top:1px solid var(--border); }
+.user-avatar { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+.user-avatar-default { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; flex-shrink:0; }
+.user-info { overflow:hidden; }
+.user-info strong { display:block; font-size:.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.user-info span { font-size:.75rem; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+
+/* MAIN */
+.main-content { margin-left:260px; flex:1; display:flex; flex-direction:column; min-height:100vh; }
+.topbar { display:flex; align-items:center; gap:16px; padding:0 32px; height:64px; background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+.topbar-menu { display:none; background:none; border:none; color:var(--text2); font-size:1.1rem; cursor:pointer; }
+.topbar-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1.1rem; flex:1; }
+.topbar-actions { display:flex; align-items:center; gap:10px; }
+.page-content { padding:32px; flex:1; }
+.sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:150; }
+
+@media (max-width:768px) {
+  .sidebar { transform:translateX(-100%); }
+  .sidebar.open { transform:none; }
+  .sidebar-close { display:block; }
+  .sidebar-overlay.open { display:block; }
+  .main-content { margin-left:0; }
+  .topbar-menu { display:block; }
+  .page-content { padding:20px; }
+}
+</style>
+<script>
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+</script>
+{% endblock %}

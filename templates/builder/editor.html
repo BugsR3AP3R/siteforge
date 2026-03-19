@@ -1,0 +1,629 @@
+{% extends 'base.html' %}
+{% block title %}Éditeur — {{ site.name }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.css">
+{% endblock %}
+
+{% block body %}
+<div class="editor-app">
+
+  <!-- TOP BAR -->
+  <header class="editor-topbar">
+    <div class="etb-left">
+      <a href="{% url 'dashboard:home' %}" class="etb-back"><i class="fa-solid fa-arrow-left"></i></a>
+      <a href="{% url 'dashboard:home' %}" class="etb-logo">Site<span>Forge</span></a>
+      <div class="etb-site-info">
+        <span class="etb-site-name">{{ site.name }}</span>
+        <span class="badge badge-{{ site.status }}">{{ site.get_status_display }}</span>
+      </div>
+    </div>
+    <div class="etb-center">
+      <div class="preview-devices">
+        <button class="dev-btn active" onclick="setDevice('desktop')" title="Desktop"><i class="fa-solid fa-desktop"></i></button>
+        <button class="dev-btn" onclick="setDevice('tablet')" title="Tablette"><i class="fa-solid fa-tablet-screen-button"></i></button>
+        <button class="dev-btn" onclick="setDevice('mobile')" title="Mobile"><i class="fa-solid fa-mobile-screen"></i></button>
+      </div>
+    </div>
+    <div class="etb-right">
+      <button class="btn btn-secondary btn-sm" onclick="saveSite()"><i class="fa-solid fa-floppy-disk"></i> Sauvegarder</button>
+      {% if site.status != 'published' %}
+      <button class="btn btn-primary btn-sm" onclick="publishSite()"><i class="fa-solid fa-rocket"></i> Publier</button>
+      {% else %}
+      <a href="{{ site.url }}" target="_blank" class="btn btn-success btn-sm"><i class="fa-solid fa-arrow-up-right-from-square"></i> Voir le site</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="editor-body">
+
+    <!-- LEFT PANEL: PAGES & SECTIONS -->
+    <aside class="editor-left">
+      <div class="left-tabs">
+        <button class="ltab active" onclick="switchTab('sections')">Sections</button>
+        <button class="ltab" onclick="switchTab('pages')">Pages</button>
+        <button class="ltab" onclick="switchTab('design')">Design</button>
+      </div>
+
+      <!-- SECTIONS TAB -->
+      <div class="tab-panel active" id="tab-sections">
+        <div class="panel-header">
+          <span>Sections de la page</span>
+        </div>
+        <div class="sections-list" id="sectionsList">
+          {% for section in sections %}
+          <div class="section-item {% if not section.is_visible %}section-hidden{% endif %}"
+               data-id="{{ section.id }}"
+               onclick="selectSection('{{ section.id }}', '{{ section.section_type }}')">
+            <div class="si-drag"><i class="fa-solid fa-grip-vertical"></i></div>
+            <div class="si-icon">
+              {% if section.section_type == 'hero' %}<i class="fa-solid fa-image"></i>
+              {% elif section.section_type == 'product_grid' or section.section_type == 'portfolio_grid' %}<i class="fa-solid fa-grid-2"></i>
+              {% elif section.section_type == 'about' %}<i class="fa-solid fa-user"></i>
+              {% elif section.section_type == 'contact' %}<i class="fa-solid fa-envelope"></i>
+              {% elif section.section_type == 'blog_grid' %}<i class="fa-solid fa-newspaper"></i>
+              {% elif section.section_type == 'gallery' %}<i class="fa-solid fa-images"></i>
+              {% else %}<i class="fa-solid fa-square"></i>{% endif %}
+            </div>
+            <div class="si-info">
+              <span class="si-name">{{ section.get_section_type_display }}</span>
+            </div>
+            <div class="si-actions">
+              <button onclick="toggleSectionVisibility(event, '{{ section.id }}', this)" title="Masquer/Afficher">
+                <i class="fa-solid {% if section.is_visible %}fa-eye{% else %}fa-eye-slash{% endif %}"></i>
+              </button>
+              <button onclick="deleteSection(event, '{{ section.id }}')" title="Supprimer">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="add-section-area">
+          <button class="add-section-btn" onclick="openAddSection()">
+            <i class="fa-solid fa-plus"></i> Ajouter une section
+          </button>
+        </div>
+      </div>
+
+      <!-- PAGES TAB -->
+      <div class="tab-panel" id="tab-pages">
+        <div class="panel-header">
+          <span>Pages du site</span>
+          <button class="btn btn-ghost btn-sm" onclick="addPage()"><i class="fa-solid fa-plus"></i></button>
+        </div>
+        {% for page in pages %}
+        <a href="?page={{ page.id }}" class="page-item {% if current_page.id == page.id %}active{% endif %}">
+          <i class="fa-solid {% if page.is_homepage %}fa-house{% else %}fa-file{% endif %}"></i>
+          <span>{{ page.title }}</span>
+          {% if page.is_homepage %}<span class="badge badge-active" style="font-size:.65rem">Accueil</span>{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+
+      <!-- DESIGN TAB -->
+      <div class="tab-panel" id="tab-design">
+        <div class="panel-header"><span>Design global</span></div>
+        <div class="design-panel">
+          <div class="dp-section">
+            <label class="dp-label">Couleurs principales</label>
+            <div class="color-pickers">
+              <div class="cp-item">
+                <input type="color" id="colorPrimary" value="{{ site.settings.colors.primary|default:'#6c63ff' }}" oninput="updateColor('primary', this.value)">
+                <span>Principale</span>
+              </div>
+              <div class="cp-item">
+                <input type="color" id="colorBg" value="{{ site.settings.colors.bg|default:'#ffffff' }}" oninput="updateColor('bg', this.value)">
+                <span>Fond</span>
+              </div>
+              <div class="cp-item">
+                <input type="color" id="colorText" value="{{ site.settings.colors.text|default:'#222222' }}" oninput="updateColor('text', this.value)">
+                <span>Texte</span>
+              </div>
+            </div>
+          </div>
+          <div class="dp-section">
+            <label class="dp-label">Police des titres</label>
+            <select class="form-select" id="fontHeading" onchange="updateFont('heading', this.value)">
+              <option value="Syne" {% if site.settings.fonts.heading == 'Syne' %}selected{% endif %}>Syne (Moderne)</option>
+              <option value="Playfair Display" {% if site.settings.fonts.heading == 'Playfair Display' %}selected{% endif %}>Playfair Display (Élégant)</option>
+              <option value="Space Grotesk" {% if site.settings.fonts.heading == 'Space Grotesk' %}selected{% endif %}>Space Grotesk (Technique)</option>
+              <option value="Cormorant Garamond" {% if site.settings.fonts.heading == 'Cormorant Garamond' %}selected{% endif %}>Cormorant (Luxe)</option>
+              <option value="Bebas Neue" {% if site.settings.fonts.heading == 'Bebas Neue' %}selected{% endif %}>Bebas Neue (Impact)</option>
+            </select>
+          </div>
+          <div class="dp-section">
+            <label class="dp-label">Police du corps</label>
+            <select class="form-select" id="fontBody" onchange="updateFont('body', this.value)">
+              <option value="DM Sans" {% if site.settings.fonts.body == 'DM Sans' %}selected{% endif %}>DM Sans</option>
+              <option value="Inter" {% if site.settings.fonts.body == 'Inter' %}selected{% endif %}>Inter</option>
+              <option value="Lato" {% if site.settings.fonts.body == 'Lato' %}selected{% endif %}>Lato</option>
+              <option value="Source Sans 3" {% if site.settings.fonts.body == 'Source Sans 3' %}selected{% endif %}>Source Sans</option>
+            </select>
+          </div>
+          <div class="dp-section">
+            <label class="dp-label">Navigation</label>
+            <label class="toggle-option">
+              <input type="checkbox" id="navSticky" {% if site.settings.navbar.sticky %}checked{% endif %} onchange="updateNavbar('sticky', this.checked)">
+              <span>Barre fixe (sticky)</span>
+            </label>
+            <label class="toggle-option">
+              <input type="checkbox" id="navTransparent" {% if site.settings.navbar.transparent %}checked{% endif %} onchange="updateNavbar('transparent', this.checked)">
+              <span>Transparente sur le hero</span>
+            </label>
+          </div>
+          <button class="btn btn-primary w-full" onclick="saveDesign()"><i class="fa-solid fa-floppy-disk"></i> Appliquer le design</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- PREVIEW IFRAME -->
+    <main class="editor-preview" id="editorPreview">
+      <div class="preview-wrapper desktop" id="previewWrapper">
+        <iframe id="previewFrame" src="{% url 'builder:preview_site' site.id %}" frameborder="0"></iframe>
+      </div>
+    </main>
+
+    <!-- RIGHT PANEL: SECTION EDITOR -->
+    <aside class="editor-right" id="sectionEditor">
+      <div class="right-panel-empty" id="rightEmpty">
+        <i class="fa-solid fa-hand-pointer"></i>
+        <p>Cliquez sur une section dans la liste pour la modifier</p>
+      </div>
+      <div class="right-panel-content" id="rightContent" style="display:none">
+        <div class="rp-header">
+          <div class="rp-title" id="rpTitle">Section</div>
+          <button onclick="closeRightPanel()" class="btn btn-ghost btn-icon"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="rp-body" id="rpBody">
+          <!-- Dynamic content injected by JS -->
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ADD SECTION MODAL -->
+<div class="modal" id="addSectionModal">
+  <div class="modal-overlay" onclick="closeAddSection()"></div>
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Ajouter une section</h3>
+      <button onclick="closeAddSection()" class="btn btn-ghost btn-icon"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="sections-catalog">
+      {% for value, label in section_types %}
+      <button class="catalog-item" onclick="addSection('{{ value }}', '{{ label }}')">
+        <div class="cat-icon">
+          {% if value == 'hero' %}<i class="fa-solid fa-image"></i>
+          {% elif value == 'about' %}<i class="fa-solid fa-user"></i>
+          {% elif value == 'services' or value == 'features' %}<i class="fa-solid fa-star"></i>
+          {% elif value == 'portfolio_grid' or value == 'product_grid' %}<i class="fa-solid fa-grid-2"></i>
+          {% elif value == 'testimonials' %}<i class="fa-solid fa-quote-left"></i>
+          {% elif value == 'contact' %}<i class="fa-solid fa-envelope"></i>
+          {% elif value == 'gallery' %}<i class="fa-solid fa-images"></i>
+          {% elif value == 'blog_grid' %}<i class="fa-solid fa-newspaper"></i>
+          {% elif value == 'newsletter' %}<i class="fa-solid fa-paper-plane"></i>
+          {% elif value == 'pricing' %}<i class="fa-solid fa-tag"></i>
+          {% elif value == 'faq' %}<i class="fa-solid fa-circle-question"></i>
+          {% elif value == 'stats' %}<i class="fa-solid fa-chart-bar"></i>
+          {% elif value == 'team' %}<i class="fa-solid fa-users"></i>
+          {% elif value == 'cta' %}<i class="fa-solid fa-bolt"></i>
+          {% elif value == 'video' %}<i class="fa-solid fa-circle-play"></i>
+          {% else %}<i class="fa-solid fa-align-left"></i>{% endif %}
+        </div>
+        <span>{{ label }}</span>
+      </button>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- DOMAIN MODAL -->
+<div class="modal" id="domainModal">
+  <div class="modal-overlay" onclick="closeDomainModal()"></div>
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Connecter un domaine</h3>
+      <button onclick="closeDomainModal()" class="btn btn-ghost btn-icon"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nom de domaine</label>
+        <div class="domain-input-wrap">
+          <span class="domain-prefix">https://</span>
+          <input type="text" id="newDomainInput" class="form-input domain-input" placeholder="monsite.com">
+        </div>
+      </div>
+      <button class="btn btn-primary w-full" onclick="submitDomain()">
+        <i class="fa-solid fa-plus"></i> Ajouter ce domaine
+      </button>
+      <div id="domainInstructions" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+.editor-app { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+.editor-topbar { display:flex; align-items:center; height:56px; background:var(--surface); border-bottom:1px solid var(--border); padding:0 16px; gap:16px; flex-shrink:0; z-index:50; }
+.etb-left { display:flex; align-items:center; gap:12px; flex:1; }
+.etb-back { width:34px; height:34px; display:flex; align-items:center; justify-content:center; border-radius:8px; color:var(--text2); transition:all .15s; }
+.etb-back:hover { background:var(--surface2); color:var(--text); }
+.etb-logo { font-family:'Syne',sans-serif; font-weight:800; font-size:1.15rem; }
+.etb-logo span { color:var(--accent); }
+.etb-site-info { display:flex; align-items:center; gap:8px; padding-left:12px; border-left:1px solid var(--border); }
+.etb-site-name { font-size:.9rem; font-weight:600; }
+.etb-center { flex:1; display:flex; justify-content:center; }
+.preview-devices { display:flex; gap:2px; background:var(--surface2); border-radius:8px; padding:3px; border:1px solid var(--border); }
+.dev-btn { width:32px; height:28px; border-radius:6px; background:none; border:none; color:var(--muted); font-size:.85rem; cursor:pointer; transition:all .15s; }
+.dev-btn.active, .dev-btn:hover { background:var(--surface3); color:var(--text); }
+.etb-right { display:flex; align-items:center; gap:8px; }
+.editor-body { display:flex; flex:1; overflow:hidden; }
+
+/* LEFT PANEL */
+.editor-left { width:240px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; overflow:hidden; }
+.left-tabs { display:flex; border-bottom:1px solid var(--border); }
+.ltab { flex:1; padding:10px 4px; background:none; border:none; color:var(--muted); font-size:.8rem; font-weight:600; cursor:pointer; transition:all .15s; border-bottom:2px solid transparent; }
+.ltab.active { color:var(--accent); border-bottom-color:var(--accent); }
+.ltab:hover:not(.active) { color:var(--text); }
+.tab-panel { display:none; flex:1; flex-direction:column; overflow:hidden; }
+.tab-panel.active { display:flex; }
+.panel-header { display:flex; align-items:center; justify-content:space-between; padding:12px 14px 8px; font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+.sections-list { flex:1; overflow-y:auto; padding:4px 8px; }
+.section-item { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; cursor:pointer; transition:all .15s; margin-bottom:2px; }
+.section-item:hover { background:var(--surface2); }
+.section-item.active { background:rgba(108,99,255,.1); border:1px solid rgba(108,99,255,.2); }
+.section-item.section-hidden { opacity:.4; }
+.si-drag { color:var(--muted); cursor:grab; font-size:.75rem; }
+.si-icon { width:24px; height:24px; border-radius:6px; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:.72rem; color:var(--accent); flex-shrink:0; }
+.si-info { flex:1; min-width:0; }
+.si-name { font-size:.8rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+.si-actions { display:flex; gap:2px; opacity:0; transition:opacity .15s; }
+.section-item:hover .si-actions { opacity:1; }
+.si-actions button { width:24px; height:24px; border-radius:4px; background:none; border:none; color:var(--muted); cursor:pointer; font-size:.75rem; display:flex; align-items:center; justify-content:center; }
+.si-actions button:hover { background:var(--surface3); color:var(--text); }
+.add-section-area { padding:8px; }
+.add-section-btn { width:100%; padding:10px; background:none; border:1px dashed var(--border2); border-radius:8px; color:var(--muted); font-size:.82rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all .15s; font-family:'DM Sans',sans-serif; }
+.add-section-btn:hover { border-color:var(--accent); color:var(--accent); background:rgba(108,99,255,.04); }
+.page-item { display:flex; align-items:center; gap:8px; padding:10px 14px; margin:2px 8px; border-radius:8px; font-size:.85rem; color:var(--text2); transition:all .15s; }
+.page-item:hover { background:var(--surface2); color:var(--text); }
+.page-item.active { background:rgba(108,99,255,.1); color:var(--accent); }
+.design-panel { padding:12px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex:1; }
+.dp-section { display:flex; flex-direction:column; gap:8px; }
+.dp-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+.color-pickers { display:flex; gap:10px; }
+.cp-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.cp-item input[type=color] { width:36px; height:36px; border:2px solid var(--border); border-radius:8px; cursor:pointer; background:none; padding:2px; }
+.cp-item span { font-size:.7rem; color:var(--text2); }
+.toggle-option { display:flex; align-items:center; gap:8px; font-size:.82rem; color:var(--text2); cursor:pointer; padding:4px 0; }
+.toggle-option input { accent-color:var(--accent); }
+
+/* PREVIEW */
+.editor-preview { flex:1; background:var(--bg); display:flex; align-items:flex-start; justify-content:center; padding:16px; overflow:auto; }
+.preview-wrapper { width:100%; height:calc(100vh - 56px - 32px); transition:width .3s ease; }
+.preview-wrapper.desktop { width:100%; }
+.preview-wrapper.tablet { width:768px; }
+.preview-wrapper.mobile { width:375px; }
+.preview-wrapper iframe { width:100%; height:100%; border-radius:8px; box-shadow:var(--shadow-lg); background:#fff; }
+
+/* RIGHT PANEL */
+.editor-right { width:300px; background:var(--surface); border-left:1px solid var(--border); overflow-y:auto; flex-shrink:0; }
+.right-panel-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:12px; text-align:center; padding:32px; }
+.right-panel-empty i { font-size:2rem; color:var(--border2); }
+.right-panel-empty p { font-size:.85rem; color:var(--muted); }
+.right-panel-content { display:flex; flex-direction:column; height:100%; }
+.rp-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border); }
+.rp-title { font-weight:700; font-size:.95rem; }
+.rp-body { padding:16px; display:flex; flex-direction:column; gap:14px; }
+.rp-field { display:flex; flex-direction:column; gap:6px; }
+.rp-field label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+.rp-field input, .rp-field textarea, .rp-field select { font-size:.85rem; }
+.rp-save { margin-top:8px; }
+
+/* MODAL */
+.modal { position:fixed; inset:0; z-index:1000; display:none; align-items:center; justify-content:center; }
+.modal.open { display:flex; }
+.modal-overlay { position:absolute; inset:0; background:rgba(0,0,0,.6); }
+.modal-box { position:relative; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); width:100%; max-width:520px; max-height:80vh; overflow-y:auto; }
+.modal-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); }
+.modal-header h3 { font-size:1rem; }
+.modal-body { padding:24px; }
+.sections-catalog { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:16px; }
+.catalog-item { display:flex; flex-direction:column; align-items:center; gap:8px; padding:16px 8px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; cursor:pointer; transition:all .15s; font-family:'DM Sans',sans-serif; font-size:.78rem; color:var(--text2); text-align:center; }
+.catalog-item:hover { border-color:var(--accent); color:var(--accent); background:rgba(108,99,255,.06); }
+.cat-icon { font-size:1.2rem; }
+.domain-input-wrap { display:flex; }
+.domain-prefix { display:flex; align-items:center; padding:0 12px; background:var(--surface3); border:1px solid var(--border); border-right:none; border-radius:var(--radius-sm) 0 0 var(--radius-sm); font-size:.85rem; color:var(--muted); white-space:nowrap; }
+.domain-input { border-radius:0 var(--radius-sm) var(--radius-sm) 0; }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script>
+const SITE_ID = '{{ site.id }}';
+const PAGE_ID = '{{ current_page.id }}';
+let siteSettings = {{ site_settings_json|safe }};
+let currentSectionId = null;
+
+// DEVICE PREVIEW
+function setDevice(device) {
+  document.querySelectorAll('.dev-btn').forEach(b => b.classList.remove('active'));
+  event.target.closest('.dev-btn').classList.add('active');
+  const wrapper = document.getElementById('previewWrapper');
+  wrapper.className = 'preview-wrapper ' + device;
+}
+
+// TABS
+function switchTab(tab) {
+  document.querySelectorAll('.ltab').forEach((b, i) => {
+    const tabs = ['sections', 'pages', 'design'];
+    b.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// SELECT SECTION
+function selectSection(sectionId, sectionType) {
+  document.querySelectorAll('.section-item').forEach(s => s.classList.remove('active'));
+  document.querySelector(`[data-id="${sectionId}"]`)?.classList.add('active');
+  currentSectionId = sectionId;
+
+  const fieldMap = {
+    'hero': [
+      {key:'title', label:'Titre', type:'text', placeholder:'Mon super titre'},
+      {key:'subtitle', label:'Sous-titre', type:'text', placeholder:'Description courte'},
+      {key:'cta_text', label:'Texte du bouton', type:'text', placeholder:'Voir plus'},
+      {key:'cta_url', label:'Lien du bouton', type:'text', placeholder:'#contact'},
+      {key:'bg_color', label:'Couleur de fond', type:'color'},
+    ],
+    'about': [
+      {key:'title', label:'Titre', type:'text'},
+      {key:'text', label:'Description', type:'textarea'},
+    ],
+    'contact': [
+      {key:'title', label:'Titre', type:'text'},
+      {key:'email', label:'Email de contact', type:'text'},
+    ],
+    'portfolio_grid': [
+      {key:'title', label:'Titre de la section', type:'text'},
+    ],
+    'product_grid': [
+      {key:'title', label:'Titre de la section', type:'text'},
+    ],
+    'newsletter': [
+      {key:'title', label:'Titre', type:'text'},
+      {key:'subtitle', label:'Sous-titre', type:'text'},
+    ],
+    'cta': [
+      {key:'title', label:'Titre', type:'text'},
+      {key:'cta_text', label:'Texte du bouton', type:'text'},
+    ],
+    'blog_grid': [
+      {key:'title', label:'Titre', type:'text'},
+    ],
+    'gallery': [
+      {key:'title', label:'Titre', type:'text'},
+    ],
+    'features': [
+      {key:'title', label:'Titre', type:'text'},
+    ],
+    'text': [
+      {key:'title', label:'Titre', type:'text'},
+      {key:'content', label:'Contenu', type:'textarea'},
+    ],
+  };
+
+  const fields = fieldMap[sectionType] || [{key:'title', label:'Titre', type:'text'}];
+  const labelMap = {};
+  document.querySelectorAll('.section-item').forEach(s => {
+    if(s.dataset.id === sectionId) {
+      labelMap.name = s.querySelector('.si-name').textContent;
+    }
+  });
+
+  document.getElementById('rightEmpty').style.display = 'none';
+  document.getElementById('rightContent').style.display = 'flex';
+  document.getElementById('rpTitle').textContent = labelMap.name || sectionType;
+
+  const body = document.getElementById('rpBody');
+  // Fetch current content
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin"></i> Chargement...</div>';
+
+  fetch(`/builder/api/section/${sectionId}/`)
+    .then(r => r.json())
+    .then(data => {
+      const content = data.content || {};
+      let html = '';
+      fields.forEach(f => {
+        const val = content[f.key] || '';
+        if(f.type === 'textarea') {
+          html += `<div class="rp-field"><label>${f.label}</label><textarea class="form-input form-textarea" id="field_${f.key}" rows="3">${val}</textarea></div>`;
+        } else if(f.type === 'color') {
+          html += `<div class="rp-field"><label>${f.label}</label><input type="color" id="field_${f.key}" value="${val || '#ffffff'}" style="width:100%;height:40px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:none;padding:4px;"></div>`;
+        } else {
+          html += `<div class="rp-field"><label>${f.label}</label><input type="text" class="form-input" id="field_${f.key}" value="${val}" placeholder="${f.placeholder||''}"></div>`;
+        }
+      });
+      html += `<div class="rp-field" style="border-top:1px solid var(--border);padding-top:12px;">
+        <label>Fond de section</label>
+        <select class="form-select" id="field_bg_style">
+          <option value="">Défaut</option><option value="light">Clair</option><option value="dark">Sombre</option><option value="accent">Accent</option>
+        </select>
+      </div>`;
+      html += `<button class="btn btn-primary w-full rp-save" onclick="saveSectionContent('${sectionId}', ${JSON.stringify(fields)})"><i class="fa-solid fa-check"></i> Appliquer les changements</button>`;
+      body.innerHTML = html;
+    })
+    .catch(() => {
+      let html = '';
+      fields.forEach(f => {
+        html += `<div class="rp-field"><label>${f.label}</label><input type="text" class="form-input" id="field_${f.key}" value="" placeholder="${f.placeholder||''}"></div>`;
+      });
+      html += `<button class="btn btn-primary w-full rp-save" onclick="saveSectionContent('${sectionId}', ${JSON.stringify(fields)})"><i class="fa-solid fa-check"></i> Appliquer</button>`;
+      body.innerHTML = html;
+    });
+}
+
+function saveSectionContent(sectionId, fields) {
+  const content = {};
+  fields.forEach(f => {
+    const el = document.getElementById('field_' + f.key);
+    if(el) content[f.key] = el.value;
+  });
+  fetch(`/builder/api/section/${sectionId}/`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:JSON.stringify({content})
+  }).then(r => r.json()).then(() => {
+    refreshPreview();
+    showNotif('Section mise à jour ✓', 'success');
+  });
+}
+
+function closeRightPanel() {
+  document.getElementById('rightEmpty').style.display = '';
+  document.getElementById('rightContent').style.display = 'none';
+  document.querySelectorAll('.section-item').forEach(s => s.classList.remove('active'));
+  currentSectionId = null;
+}
+
+// ADD SECTION
+function openAddSection() { document.getElementById('addSectionModal').classList.add('open'); }
+function closeAddSection() { document.getElementById('addSectionModal').classList.remove('open'); }
+function addSection(sectionType, label) {
+  fetch(`/builder/api/page/${PAGE_ID}/sections/add/`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:JSON.stringify({section_type: sectionType})
+  }).then(r => r.json()).then(data => {
+    closeAddSection();
+    location.reload();
+  });
+}
+
+// TOGGLE VISIBILITY
+function toggleSectionVisibility(e, sectionId, btn) {
+  e.stopPropagation();
+  const item = btn.closest('.section-item');
+  const hidden = item.classList.contains('section-hidden');
+  fetch(`/builder/api/section/${sectionId}/`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:JSON.stringify({is_visible: hidden})
+  }).then(() => {
+    item.classList.toggle('section-hidden', !hidden);
+    btn.querySelector('i').className = hidden ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+    refreshPreview();
+  });
+}
+
+// DELETE SECTION
+function deleteSection(e, sectionId) {
+  e.stopPropagation();
+  if(!confirm('Supprimer cette section ?')) return;
+  fetch(`/builder/api/section/${sectionId}/delete/`, {
+    method:'DELETE',
+    headers:{'X-CSRFToken':getCookie('csrftoken')}
+  }).then(() => {
+    document.querySelector(`[data-id="${sectionId}"]`)?.remove();
+    refreshPreview();
+  });
+}
+
+// DESIGN
+function updateColor(key, value) {
+  if(!siteSettings.colors) siteSettings.colors = {};
+  siteSettings.colors[key] = value;
+}
+function updateFont(key, value) {
+  if(!siteSettings.fonts) siteSettings.fonts = {};
+  siteSettings.fonts[key] = value;
+}
+function updateNavbar(key, value) {
+  if(!siteSettings.navbar) siteSettings.navbar = {};
+  siteSettings.navbar[key] = value;
+}
+function saveDesign() {
+  fetch(`/builder/api/site/${SITE_ID}/settings/`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:JSON.stringify({settings: siteSettings})
+  }).then(() => { refreshPreview(); showNotif('Design appliqué ✓', 'success'); });
+}
+
+// SAVE & PUBLISH
+function saveSite() {
+  saveDesign();
+}
+function publishSite() {
+  if(!confirm('Publier votre site ? Il sera accessible en ligne.')) return;
+  fetch(`/builder/api/site/${SITE_ID}/publish/`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:'{}'
+  }).then(r => r.json()).then(data => {
+    showNotif('Site publié ! 🚀', 'success');
+    setTimeout(() => location.reload(), 1500);
+  });
+}
+
+// DRAG AND DROP REORDER
+const sortable = new Sortable(document.getElementById('sectionsList'), {
+  handle: '.si-drag',
+  animation: 150,
+  onEnd: function() {
+    const items = document.querySelectorAll('.section-item');
+    const order = [...items].map(i => i.dataset.id);
+    fetch(`/builder/api/page/${PAGE_ID}/sections/reorder/`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+      body:JSON.stringify({order})
+    }).then(() => refreshPreview());
+  }
+});
+
+// HELPERS
+function refreshPreview() {
+  const frame = document.getElementById('previewFrame');
+  // Force reload en ajoutant timestamp pour éviter le cache
+  const baseUrl = `/builder/preview/${SITE_ID}/?page=${PAGE_ID}&t=`;
+  frame.src = baseUrl + Date.now();
+}
+function showNotif(msg, type) {
+  const n = document.createElement('div');
+  n.className = `message ${type}`;
+  n.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${msg}`;
+  document.body.appendChild(n);
+  setTimeout(() => n.remove(), 3000);
+}
+function getCookie(name) {
+  const v = document.cookie.split('; ').find(r => r.startsWith(name + '='));
+  return v ? v.split('=')[1] : '';
+}
+function closeDomainModal() { document.getElementById('domainModal').classList.remove('open'); }
+function submitDomain() {
+  const domain = document.getElementById('newDomainInput').value.trim();
+  if(!domain) return;
+  fetch(`/builder/api/site/${SITE_ID}/domain/`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:JSON.stringify({domain})
+  }).then(r => r.json()).then(data => {
+    if(data.status === 'ok') {
+      document.getElementById('domainInstructions').style.display = 'block';
+      document.getElementById('domainInstructions').innerHTML = `
+        <div class="alert alert-info" style="margin-top:16px">
+          <div><strong>Instructions DNS</strong><br>
+          Ajoutez cet enregistrement CNAME chez votre registrar :<br><br>
+          <code>Nom: ${data.dns_record.name}</code><br>
+          <code>Type: CNAME</code><br>
+          <code>Valeur: ${data.dns_record.value}</code><br>
+          <code>TTL: ${data.dns_record.ttl}</code>
+          </div>
+        </div>`;
+    }
+  });
+}
+
+// Expose for API calls
+window.renderSection = function(id) { selectSection(id, ''); }
+</script>
+{% endblock %}

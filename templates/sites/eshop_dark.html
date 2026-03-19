@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ site.name }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: {{ site.settings.colors.primary|default:'#6c63ff' }};
+    --bg:      {{ site.settings.colors.bg|default:'#0a0a0a' }};
+    --text:    {{ site.settings.colors.text|default:'#ffffff' }};
+    --heading-font: '{{ site.settings.fonts.heading|default:'Syne' }}', sans-serif;
+    --body-font:    '{{ site.settings.fonts.body|default:'DM Sans' }}', sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { font-family:var(--body-font); background:var(--bg); color:var(--text); }
+
+  /* NAV */
+  nav {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 60px;
+    {% if site.settings.navbar.sticky %}position:sticky; top:0; z-index:100;{% endif %}
+    background:{% if site.settings.navbar.transparent %}transparent{% else %}var(--bg){% endif %};
+    border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  .nav-logo { font-family:var(--heading-font); font-weight:800; font-size:1.25rem; }
+  .nav-links { display:flex; gap:28px; list-style:none; }
+  .nav-links a { color:rgba(255,255,255,.6); text-decoration:none; font-size:.9rem; transition:color .2s; }
+  .nav-links a:hover { color:var(--text); }
+
+  /* SECTIONS */
+  .section-hero {
+    min-height:88vh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center;
+    padding:80px 40px;
+    background:linear-gradient(160deg, color-mix(in srgb, var(--primary) 8%, var(--bg)), var(--bg));
+  }
+  .section-hero h1 { font-family:var(--heading-font); font-size:clamp(2.2rem,6vw,4.5rem); font-weight:800; line-height:1.1; margin-bottom:20px; }
+  .section-hero p  { font-size:1.05rem; opacity:.65; max-width:520px; line-height:1.7; margin-bottom:36px; }
+  .btn-cta {
+    display:inline-block; background:var(--primary); color:#fff;
+    padding:14px 34px; border-radius:50px; text-decoration:none;
+    font-weight:600; font-size:.95rem; transition:all .2s;
+  }
+  .btn-cta:hover { transform:translateY(-2px); opacity:.9; box-shadow:0 8px 24px rgba(0,0,0,.3); }
+
+  .section-content { padding:80px 60px; max-width:1100px; margin:0 auto; }
+  .section-title { font-family:var(--heading-font); font-size:2rem; font-weight:700; margin-bottom:40px; }
+
+  /* PORTFOLIO GRID */
+  .grid-portfolio { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; }
+  .grid-portfolio .item {
+    aspect-ratio:4/3; background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.06); border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:.85rem; color:rgba(255,255,255,.25); transition:all .2s;
+  }
+  .grid-portfolio .item:hover { border-color:var(--primary); background:rgba(255,255,255,.06); }
+
+  /* PRODUCT GRID */
+  .grid-products { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; }
+  .product-card {
+    background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06);
+    border-radius:12px; overflow:hidden; transition:all .2s;
+  }
+  .product-card:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(0,0,0,.4); }
+  .product-img { aspect-ratio:1; background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.2); font-size:2rem; }
+  .product-info { padding:14px; }
+  .product-name { font-weight:600; font-size:.9rem; margin-bottom:4px; }
+  .product-price { color:var(--primary); font-weight:700; font-family:var(--heading-font); }
+
+  /* ABOUT */
+  .section-about .about-inner { display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center; }
+  .section-about p { opacity:.7; line-height:1.8; font-size:.95rem; }
+  .about-img { aspect-ratio:4/3; background:rgba(255,255,255,.05); border-radius:16px; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.15); font-size:3rem; }
+
+  /* GALLERY */
+  .grid-gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+  .gallery-item { aspect-ratio:1; background:rgba(255,255,255,.05); border-radius:10px; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.2); font-size:2rem; transition:all .2s; }
+  .gallery-item:hover { transform:scale(1.02); }
+
+  /* BLOG */
+  .grid-blog { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+  .blog-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:24px; transition:all .2s; }
+  .blog-card:hover { border-color:var(--primary); }
+  .blog-tag { font-size:.75rem; color:var(--primary); font-weight:600; margin-bottom:8px; }
+  .blog-title { font-family:var(--heading-font); font-size:1rem; margin-bottom:8px; line-height:1.3; }
+  .blog-excerpt { font-size:.83rem; opacity:.55; line-height:1.6; }
+
+  /* CONTACT */
+  .section-contact .contact-inner { max-width:560px; }
+  .contact-email { font-size:1.1rem; color:var(--primary); margin-bottom:28px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+  .form-field { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+  .form-field label { font-size:.78rem; opacity:.5; }
+  .form-field input, .form-field textarea {
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
+    border-radius:8px; padding:12px 14px; color:var(--text);
+    font-family:var(--body-font); font-size:.9rem;
+  }
+  .form-field input:focus, .form-field textarea:focus { outline:none; border-color:var(--primary); }
+  .form-field textarea { min-height:100px; resize:vertical; }
+
+  /* NEWSLETTER */
+  .section-newsletter {
+    text-align:center; padding:80px 40px;
+    background:linear-gradient(135deg, color-mix(in srgb, var(--primary) 6%, var(--bg)), var(--bg));
+    border-top:1px solid rgba(255,255,255,.05);
+    border-bottom:1px solid rgba(255,255,255,.05);
+  }
+  .section-newsletter h2 { font-family:var(--heading-font); font-size:1.8rem; margin-bottom:8px; }
+  .section-newsletter p { opacity:.6; margin-bottom:28px; }
+  .newsletter-form { display:flex; gap:10px; max-width:400px; margin:0 auto; }
+  .newsletter-form input { flex:1; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:12px 16px; color:var(--text); font-family:var(--body-font); }
+  .newsletter-form button { background:var(--primary); color:#fff; border:none; padding:12px 22px; border-radius:8px; font-weight:600; cursor:pointer; font-family:var(--body-font); }
+
+  /* CTA */
+  .section-cta {
+    text-align:center; padding:80px 40px;
+    background:rgba(255,255,255,.02);
+  }
+  .section-cta h2 { font-family:var(--heading-font); font-size:2rem; margin-bottom:16px; }
+
+  /* FEATURES */
+  .grid-features { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:20px; }
+  .feat-card { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:24px; }
+  .feat-icon { width:40px; height:40px; border-radius:10px; background:color-mix(in srgb, var(--primary) 15%, transparent); display:flex; align-items:center; justify-content:center; margin-bottom:14px; font-size:1.1rem; }
+  .feat-title { font-family:var(--heading-font); font-size:.95rem; margin-bottom:6px; }
+  .feat-desc { font-size:.83rem; opacity:.55; line-height:1.6; }
+
+  /* FOOTER */
+  footer { padding:32px 60px; border-top:1px solid rgba(255,255,255,.06); display:flex; align-items:center; justify-content:space-between; }
+  .footer-logo { font-family:var(--heading-font); font-weight:800; }
+  footer p { opacity:.35; font-size:.82rem; }
+
+  /* PREVIEW BANNER */
+  .preview-banner {
+    background:color-mix(in srgb, var(--primary) 20%, #000);
+    border-bottom:2px solid var(--primary);
+    padding:8px 16px; text-align:center;
+    font-size:.78rem; color:#fff; font-weight:500; letter-spacing:.02em;
+  }
+
+  @media(max-width:768px) {
+    nav { padding:16px 20px; }
+    .section-content { padding:60px 20px; }
+    .section-hero { padding:60px 20px; }
+    .section-about .about-inner { grid-template-columns:1fr; gap:32px; }
+    .form-row { grid-template-columns:1fr; }
+    footer { flex-direction:column; gap:8px; text-align:center; padding:24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+{% if is_preview %}
+<div class="preview-banner">👁 Mode prévisualisation — <a href="#" style="color:inherit;font-weight:700">Publiez</a> pour rendre le site accessible</div>
+{% endif %}
+
+<nav>
+  <div class="nav-logo">{{ site.name }}</div>
+  <ul class="nav-links">
+    {% for p in pages %}<li><a href="?page={{ p.slug }}">{{ p.title }}</a></li>{% endfor %}
+  </ul>
+</nav>
+
+{% for section in sections %}
+
+{% if section.section_type == 'hero' %}
+<section class="section-hero">
+  <h1>{{ section.content.title|default:"Titre principal" }}</h1>
+  {% if section.content.subtitle %}<p>{{ section.content.subtitle }}</p>{% endif %}
+  {% if section.content.cta_text %}
+  <a href="{{ section.content.cta_url|default:'#' }}" class="btn-cta">{{ section.content.cta_text }}</a>
+  {% endif %}
+</section>
+
+{% elif section.section_type == 'about' %}
+<section class="section-content section-about">
+  <h2 class="section-title">{{ section.content.title|default:"À propos" }}</h2>
+  <div class="about-inner">
+    <div><p>{{ section.content.text|default:"Parlez de vous ici..." }}</p></div>
+    <div class="about-img">📷</div>
+  </div>
+</section>
+
+{% elif section.section_type == 'portfolio_grid' %}
+<section class="section-content">
+  <h2 class="section-title">{{ section.content.title|default:"Portfolio" }}</h2>
+  <div class="grid-portfolio">
+    {% for item in section.content.items %}
+    <div class="item">{{ item.title|default:"Projet" }}</div>
+    {% empty %}
+    <div class="item">Projet 1</div>
+    <div class="item">Projet 2</div>
+    <div class="item">Projet 3</div>
+    <div class="item">Projet 4</div>
+    <div class="item">Projet 5</div>
+    <div class="item">Projet 6</div>
+    {% endfor %}
+  </div>
+</section>
+
+{% elif section.section_type == 'product_grid' %}
+<section class="section-content">
+  <h2 class="section-title">{{ section.content.title|default:"Nos produits" }}</h2>
+  <div class="grid-products">
+    {% for item in section.content.items %}
+    <div class="product-card">
+      <div class="product-img">🛍</div>
+      <div class="product-info">
+        <div class="product-name">{{ item.name }}</div>
+        <div class="product-price">{{ item.price }}€</div>
+      </div>
+    </div>
+    {% empty %}
+    {% for i in "12345678" %}
+    <div class="product-card">
+      <div class="product-img">🛍</div>
+      <div class="product-info">
+        <div class="product-name">Produit {{ forloop.counter }}</div>
+        <div class="product-price">29,99€</div>
+      </div>
+    </div>
+    {% endfor %}
+    {% endfor %}
+  </div>
+</section>
+
+{% elif section.section_type == 'gallery' %}
+<section class="section-content">
+  <h2 class="section-title">{{ section.content.title|default:"Galerie" }}</h2>
+  <div class="grid-gallery">
+    {% for item in section.content.items %}
+    <div class="gallery-item">🖼</div>
+    {% empty %}
+    {% for i in "123456" %}
+    <div class="gallery-item">🖼</div>
+    {% endfor %}
+    {% endfor %}
+  </div>
+</section>
+
+{% elif section.section_type == 'blog_grid' %}
+<section class="section-content">
+  <h2 class="section-title">{{ section.content.title|default:"Articles récents" }}</h2>
+  <div class="grid-blog">
+    {% for item in section.content.items %}
+    <div class="blog-card">
+      <div class="blog-tag">Article</div>
+      <div class="blog-title">{{ item.title }}</div>
+      <div class="blog-excerpt">{{ item.excerpt }}</div>
+    </div>
+    {% empty %}
+    {% for i in "123" %}
+    <div class="blog-card">
+      <div class="blog-tag">Article</div>
+      <div class="blog-title">Titre de l'article {{ forloop.counter }}</div>
+      <div class="blog-excerpt">Un résumé accrocheur qui donne envie de lire la suite de cet article...</div>
+    </div>
+    {% endfor %}
+    {% endfor %}
+  </div>
+</section>
+
+{% elif section.section_type == 'features' %}
+<section class="section-content">
+  <h2 class="section-title">{{ section.content.title|default:"Fonctionnalités" }}</h2>
+  <div class="grid-features">
+    {% for item in section.content.items %}
+    <div class="feat-card">
+      <div class="feat-icon">⭐</div>
+      <div class="feat-title">{{ item.title }}</div>
+      <div class="feat-desc">{{ item.description }}</div>
+    </div>
+    {% empty %}
+    {% for i in "123456" %}
+    <div class="feat-card">
+      <div class="feat-icon">⭐</div>
+      <div class="feat-title">Fonctionnalité {{ forloop.counter }}</div>
+      <div class="feat-desc">Description de cette fonctionnalité importante pour vos clients.</div>
+    </div>
+    {% endfor %}
+    {% endfor %}
+  </div>
+</section>
+
+{% elif section.section_type == 'contact' %}
+<section class="section-content section-contact">
+  <h2 class="section-title">{{ section.content.title|default:"Contact" }}</h2>
+  <div class="contact-inner">
+    {% if section.content.email %}<p class="contact-email">{{ section.content.email }}</p>{% endif %}
+    {% if section.content.show_form %}
+    <div class="form-row">
+      <div class="form-field"><label>Prénom</label><input type="text" placeholder="Jean"></div>
+      <div class="form-field"><label>Nom</label><input type="text" placeholder="Dupont"></div>
+    </div>
+    <div class="form-field"><label>Email</label><input type="email" placeholder="jean@email.com"></div>
+    <div class="form-field"><label>Message</label><textarea placeholder="Votre message..."></textarea></div>
+    <a href="#" class="btn-cta" style="margin-top:8px">Envoyer le message</a>
+    {% endif %}
+  </div>
+</section>
+
+{% elif section.section_type == 'newsletter' %}
+<section class="section-newsletter">
+  <h2>{{ section.content.title|default:"Newsletter" }}</h2>
+  <p>{{ section.content.subtitle|default:"Inscrivez-vous pour recevoir nos actualités" }}</p>
+  <div class="newsletter-form">
+    <input type="email" placeholder="votre@email.com">
+    <button>S'inscrire</button>
+  </div>
+</section>
+
+{% elif section.section_type == 'cta' %}
+<section class="section-cta">
+  <h2>{{ section.content.title|default:"Passez à l'action" }}</h2>
+  {% if section.content.subtitle %}<p style="opacity:.6;margin-bottom:28px">{{ section.content.subtitle }}</p>{% endif %}
+  {% if section.content.cta_text %}
+  <a href="{{ section.content.cta_url|default:'#' }}" class="btn-cta">{{ section.content.cta_text }}</a>
+  {% endif %}
+</section>
+
+{% elif section.section_type == 'text' %}
+<section class="section-content">
+  {% if section.content.title %}<h2 class="section-title">{{ section.content.title }}</h2>{% endif %}
+  <div style="opacity:.75;line-height:1.8;max-width:700px">{{ section.content.content|default:""|linebreaks }}</div>
+</section>
+
+{% endif %}
+
+{% endfor %}
+
+<footer>
+  <div class="footer-logo">{{ site.name }}</div>
+  <p>© 2025 {{ site.name }}. Tous droits réservés.</p>
+</footer>
+
+</body>
+</html>

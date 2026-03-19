@@ -1,0 +1,80 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}Nouveau site — Choisir le type{% endblock %}
+{% block page_title %}Créer un site{% endblock %}
+{% block topbar_actions %}{% endblock %}
+
+{% block content %}
+<div class="wizard-header animate-fade">
+  <div class="wizard-steps">
+    <div class="wstep active"><span>1</span> Type de site</div>
+    <div class="wstep-line"></div>
+    <div class="wstep"><span>2</span> Design</div>
+    <div class="wstep-line"></div>
+    <div class="wstep"><span>3</span> Configuration</div>
+  </div>
+</div>
+
+<div class="wizard-content animate-fade" style="animation-delay:.05s">
+  <div class="wizard-title">
+    <h2>Quel type de site voulez-vous créer ?</h2>
+    <p>Choisissez la catégorie qui correspond le mieux à votre projet</p>
+  </div>
+
+  <div class="type-grid">
+    {% for value, label in site_types %}
+    <a href="{% url 'builder:create_step2' value %}" class="type-card type-{{ value }}">
+      <div class="type-card-icon">
+        {% if value == 'portfolio' %}<i class="fa-solid fa-user-tie"></i>
+        {% elif value == 'ecommerce' %}<i class="fa-solid fa-store"></i>
+        {% elif value == 'eshop' %}<i class="fa-solid fa-shopping-bag"></i>
+        {% elif value == 'eart' %}<i class="fa-solid fa-palette"></i>
+        {% else %}<i class="fa-solid fa-newspaper"></i>{% endif %}
+      </div>
+      <div class="type-card-body">
+        <h3>{{ label }}</h3>
+        <p>
+          {% if value == 'portfolio' %}Présentez vos créations, compétences et projets avec élégance
+          {% elif value == 'ecommerce' %}Vendez vos produits avec une boutique en ligne complète et professionnelle
+          {% elif value == 'eshop' %}Créez une boutique mode et lifestyle avec un design tendance
+          {% elif value == 'eart' %}Exposez et vendez vos œuvres d'art dans une galerie en ligne
+          {% else %}Partagez vos articles, actualités et réflexions avec votre communauté{% endif %}
+        </p>
+        <div class="type-card-designs">
+          <span>3 designs disponibles</span>
+        </div>
+      </div>
+      <div class="type-card-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+.wizard-header { margin-bottom:36px; }
+.wizard-steps { display:flex; align-items:center; gap:0; max-width:500px; }
+.wstep { display:flex; align-items:center; gap:8px; font-size:.85rem; font-weight:600; color:var(--muted); white-space:nowrap; }
+.wstep.active { color:var(--accent); }
+.wstep.done { color:var(--success); }
+.wstep span { width:28px; height:28px; border-radius:50%; border:2px solid currentColor; display:flex; align-items:center; justify-content:center; font-size:.8rem; }
+.wstep-line { flex:1; height:1px; background:var(--border); min-width:40px; margin:0 12px; }
+.wizard-content { max-width:800px; }
+.wizard-title { margin-bottom:32px; }
+.wizard-title h2 { font-size:1.4rem; margin-bottom:8px; }
+.wizard-title p { color:var(--text2); }
+.type-grid { display:flex; flex-direction:column; gap:14px; }
+.type-card { display:flex; align-items:center; gap:20px; background:var(--surface); border:2px solid var(--border); border-radius:var(--radius); padding:24px; transition:all .2s; cursor:pointer; }
+.type-card:hover { border-color:var(--accent); box-shadow:0 0 0 1px rgba(108,99,255,.2), var(--shadow); transform:translateX(4px); }
+.type-card-icon { width:56px; height:56px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0; }
+.type-portfolio .type-card-icon { background:rgba(108,99,255,.12); color:#6c63ff; }
+.type-ecommerce .type-card-icon { background:rgba(67,233,123,.12); color:#43e97b; }
+.type-eshop .type-card-icon { background:rgba(247,151,30,.12); color:#f7971e; }
+.type-eart .type-card-icon { background:rgba(255,101,132,.12); color:#ff6584; }
+.type-blog .type-card-icon { background:rgba(88,166,255,.12); color:#58a6ff; }
+.type-card-body { flex:1; }
+.type-card-body h3 { font-size:1rem; margin-bottom:4px; }
+.type-card-body p { font-size:.85rem; color:var(--text2); line-height:1.5; }
+.type-card-designs { margin-top:8px; font-size:.78rem; color:var(--muted); }
+.type-card-arrow { color:var(--muted); transition:color .2s, transform .2s; }
+.type-card:hover .type-card-arrow { color:var(--accent); transform:translateX(4px); }
+</style>
+{% endblock %}

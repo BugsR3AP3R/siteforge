@@ -1,0 +1,162 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}{{ site.name }} — Gérer{% endblock %}
+{% block page_title %}{{ site.name }}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'builder:editor' site.id %}" class="btn btn-primary btn-sm"><i class="fa-solid fa-pen-to-square"></i> Ouvrir l'éditeur</a>
+{% if site.status == 'published' %}
+<a href="{{ site.url }}" target="_blank" class="btn btn-secondary btn-sm"><i class="fa-solid fa-arrow-up-right-from-square"></i> Voir le site</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="site-detail-grid animate-fade">
+  <div class="sd-main">
+    <!-- SITE INFO -->
+    <div class="card mb-4">
+      <div class="card-header-row">
+        <div class="site-type-pill site-type-{{ site.site_type }}">
+          <i class="fa-solid {% if site.site_type == 'portfolio' %}fa-user-tie{% elif site.site_type == 'ecommerce' %}fa-store{% elif site.site_type == 'eshop' %}fa-shopping-bag{% elif site.site_type == 'eart' %}fa-palette{% else %}fa-newspaper{% endif %}"></i>
+          {{ site.get_site_type_display }}
+        </div>
+        <span class="badge badge-{{ site.status }}">{{ site.get_status_display }}</span>
+      </div>
+      <h2 style="margin:12px 0 4px">{{ site.name }}</h2>
+      <div class="site-url-display">
+        <i class="fa-solid fa-link"></i> <a href="{{ site.url }}" target="_blank">{{ site.url }}</a>
+      </div>
+      <div class="site-stats-row">
+        <div class="ss-item"><i class="fa-solid fa-calendar"></i> Créé le {{ site.created_at|date:"d M Y" }}</div>
+        <div class="ss-item"><i class="fa-solid fa-layer-group"></i> {{ pages.count }} page{{ pages.count|pluralize }}</div>
+        <div class="ss-item"><i class="fa-solid fa-image"></i> {{ media_count }} média{{ media_count|pluralize }}</div>
+      </div>
+    </div>
+
+    <!-- PAGES -->
+    <div class="card mb-4">
+      <div class="card-section-title">
+        <h4><i class="fa-solid fa-file"></i> Pages</h4>
+        <a href="{% url 'builder:editor' site.id %}" class="btn btn-ghost btn-sm">+ Ajouter</a>
+      </div>
+      {% for page in pages %}
+      <div class="page-row">
+        <div class="pr-info">
+          <i class="fa-solid {% if page.is_homepage %}fa-house{% else %}fa-file{% endif %}" style="color:var(--muted)"></i>
+          <span>{{ page.title }}</span>
+          {% if page.is_homepage %}<span class="badge badge-active" style="font-size:.65rem">Accueil</span>{% endif %}
+        </div>
+        <div class="pr-actions">
+          <a href="{% url 'builder:editor' site.id %}?page={{ page.id }}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-pen"></i> Éditer</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- DOMAINS -->
+    <div class="card mb-4">
+      <div class="card-section-title">
+        <h4><i class="fa-solid fa-globe"></i> Domaines</h4>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('domainFormArea').style.display='block'">+ Ajouter</button>
+      </div>
+      <!-- Default subdomain -->
+      <div class="domain-row">
+        <div class="dr-info">
+          <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
+          <span>{{ site.slug }}.siteforge.io</span>
+          <span class="badge badge-active">Actif</span>
+          <span class="badge badge-draft">Sous-domaine gratuit</span>
+        </div>
+      </div>
+      {% for domain in domains %}
+      <div class="domain-row">
+        <div class="dr-info">
+          <i class="fa-solid {% if domain.is_verified %}fa-circle-check{% else %}fa-clock{% endif %}" style="color:{% if domain.is_verified %}var(--success){% else %}var(--warning){% endif %}"></i>
+          <span>{{ domain.domain }}</span>
+          {% if domain.is_verified %}
+          <span class="badge badge-active">Vérifié</span>
+          {% else %}
+          <span class="badge badge-trial">En attente</span>
+          {% endif %}
+          {% if domain.is_primary %}<span class="badge badge-published">Principal</span>{% endif %}
+        </div>
+        {% if not domain.is_verified %}
+        <div class="dr-actions">
+          <a href="/builder/api/domain/{{ domain.id }}/verify/" class="btn btn-secondary btn-sm">Vérifier</a>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <div id="domainFormArea" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+        <div class="form-group">
+          <label class="form-label">Nom de domaine</label>
+          <input type="text" id="newDomain" class="form-input" placeholder="monsite.com">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary btn-sm" onclick="addDomain('{{ site.id }}')">Ajouter</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('domainFormArea').style.display='none'">Annuler</button>
+        </div>
+        <div id="dnsInstructions" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- DANGER ZONE -->
+    <div class="card danger-zone">
+      <h4 style="color:var(--danger);margin-bottom:16px"><i class="fa-solid fa-triangle-exclamation"></i> Zone de danger</h4>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <strong>Supprimer ce site</strong>
+          <p style="font-size:.85rem;color:var(--text2);margin-top:2px">Cette action est irréversible. Tous les contenus seront supprimés.</p>
+        </div>
+        <a href="{% url 'dashboard:delete_site' site.id %}" class="btn btn-danger btn-sm">
+          <i class="fa-solid fa-trash"></i> Supprimer
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.site-detail-grid { max-width:720px; }
+.sd-main {}
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; }
+.mb-4 { margin-bottom:16px; }
+.card-header-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.site-url-display { font-size:.9rem; color:var(--muted); margin-bottom:16px; display:flex; align-items:center; gap:6px; }
+.site-url-display a { color:var(--accent); }
+.site-stats-row { display:flex; gap:20px; flex-wrap:wrap; }
+.ss-item { display:flex; align-items:center; gap:6px; font-size:.82rem; color:var(--text2); }
+.card-section-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.card-section-title h4 { display:flex; align-items:center; gap:8px; font-size:.9rem; }
+.page-row, .domain-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-top:1px solid var(--border); gap:12px; }
+.pr-info, .dr-info { display:flex; align-items:center; gap:8px; font-size:.88rem; flex:1; flex-wrap:wrap; }
+.pr-actions, .dr-actions { flex-shrink:0; }
+.site-type-pill { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:100px; font-size:.75rem; font-weight:600; }
+.site-type-portfolio { background:rgba(108,99,255,.12); color:#6c63ff; }
+.site-type-ecommerce { background:rgba(67,233,123,.12); color:#43e97b; }
+.site-type-eshop { background:rgba(247,151,30,.12); color:#f7971e; }
+.site-type-eart { background:rgba(255,101,132,.12); color:#ff6584; }
+.site-type-blog { background:rgba(88,166,255,.12); color:#58a6ff; }
+.danger-zone { border-color:rgba(255,71,87,.2); background:rgba(255,71,87,.02); }
+</style>
+<script>
+function addDomain(siteId) {
+  const domain = document.getElementById('newDomain').value.trim();
+  if(!domain) return;
+  fetch(`/builder/api/site/${siteId}/domain/`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
+    body:JSON.stringify({domain})
+  }).then(r=>r.json()).then(data => {
+    if(data.status === 'ok') {
+      document.getElementById('dnsInstructions').innerHTML = `
+        <div class="alert alert-info">
+          <div><strong>Configurez votre DNS :</strong><br>
+          <code>CNAME</code> : <code>${domain}</code> → <code>${data.dns_record.value}</code>
+          </div>
+        </div>`;
+      setTimeout(() => location.reload(), 3000);
+    }
+  });
+}
+</script>
+{% endblock %}

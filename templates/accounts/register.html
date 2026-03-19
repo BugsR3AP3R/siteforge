@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Créer un compte — SiteForge{% endblock %}
+{% block body %}
+<div class="auth-page">
+  <div class="auth-left">
+    <a href="/" class="logo">Site<span>Forge</span></a>
+    <div class="auth-promo">
+      <div class="trial-highlight">
+        <i class="fa-solid fa-gift"></i>
+        <div>
+          <strong>{{ trial_days }} jours gratuits</strong>
+          <span>Aucune carte bancaire requise</span>
+        </div>
+      </div>
+      <h2>Lancez votre site web professionnel aujourd'hui</h2>
+      <div class="auth-features">
+        <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Portfolio, boutique, blog et plus</div>
+        <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Connectez votre domaine</div>
+        <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Personnalisation complète</div>
+        <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Annulable à tout moment</div>
+      </div>
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="auth-box">
+      <h1>Créer mon compte 🚀</h1>
+      <p class="auth-sub">{{ trial_days }} jours gratuits, sans engagement</p>
+      {% if form.errors %}
+      <div class="alert alert-error"><i class="fa-solid fa-circle-xmark"></i>
+        {% for field in form %}{% for error in field.errors %}{{ error }} {% endfor %}{% endfor %}
+      </div>
+      {% endif %}
+      <form method="post" class="auth-form">
+        {% csrf_token %}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Prénom</label>
+            {{ form.first_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nom</label>
+            {{ form.last_name }}
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Adresse email</label>
+          {{ form.email }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          {{ form.password1 }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirmer le mot de passe</label>
+          {{ form.password2 }}
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg w-full">
+          <i class="fa-solid fa-rocket"></i> Créer mon compte gratuitement
+        </button>
+        <p style="font-size:.78rem;color:var(--muted);text-align:center;margin-top:12px">
+          En créant un compte, vous acceptez nos <a href="#" style="color:var(--accent)">CGU</a> et notre <a href="#" style="color:var(--accent)">politique de confidentialité</a>.
+        </p>
+      </form>
+      <p class="auth-switch">Déjà un compte ? <a href="{% url 'accounts:login' %}">Se connecter</a></p>
+    </div>
+  </div>
+</div>
+{% include 'auth_style.html' %}
+{% endblock %}

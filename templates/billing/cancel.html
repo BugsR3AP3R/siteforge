@@ -1,0 +1,18 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}Annuler l'abonnement{% endblock %}
+{% block page_title %}Annuler l'abonnement{% endblock %}
+{% block content %}
+<div style="max-width:500px">
+  <div class="card" style="text-align:center;padding:48px">
+    <i class="fa-solid fa-triangle-exclamation" style="font-size:2.5rem;color:var(--warning);margin-bottom:20px;display:block"></i>
+    <h2 style="margin-bottom:8px">Annuler votre abonnement ?</h2>
+    <p style="color:var(--text2);margin-bottom:32px">Vous gardez accès jusqu'à la fin de la période de facturation actuelle. Vos sites seront suspendus après.</p>
+    <div style="display:flex;gap:12px;justify-content:center">
+      <a href="{% url 'billing:home' %}" class="btn btn-secondary">Annuler</a>
+      <form method="post">{% csrf_token %}
+        <button type="submit" class="btn btn-danger">Confirmer l'annulation</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

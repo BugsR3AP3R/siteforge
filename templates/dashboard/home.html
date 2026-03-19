@@ -1,0 +1,182 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}Dashboard — SiteForge{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- WELCOME BANNER -->
+<div class="welcome-banner animate-fade">
+  <div class="welcome-text">
+    <h2>Bonjour, {{ request.user.first_name|default:request.user.email }} 👋</h2>
+    <p>{% if subscription and subscription.status == 'trialing' %}Essai gratuit — {{ request.user.trial_days_left }} jours restants
+    {% elif subscription and subscription.is_active %}Abonnement {{ subscription.plan }} actif
+    {% else %}Aucun abonnement actif{% endif %}</p>
+  </div>
+  <a href="{% url 'builder:create_step1' %}" class="btn btn-primary btn-lg">
+    <i class="fa-solid fa-plus"></i> Créer un nouveau site
+  </a>
+</div>
+
+<!-- STATS ROW -->
+<div class="stats-row animate-fade" style="animation-delay:.05s">
+  <div class="stat-card">
+    <div class="sc-icon" style="background:rgba(108,99,255,.1);color:var(--accent)"><i class="fa-solid fa-globe"></i></div>
+    <div class="sc-value">{{ site_count }}</div>
+    <div class="sc-label">Sites au total</div>
+  </div>
+  <div class="stat-card">
+    <div class="sc-icon" style="background:rgba(67,233,123,.1);color:var(--accent3)"><i class="fa-solid fa-circle-check"></i></div>
+    <div class="sc-value">{{ published_count }}</div>
+    <div class="sc-label">Sites publiés</div>
+  </div>
+  <div class="stat-card">
+    <div class="sc-icon" style="background:rgba(160,160,192,.08);color:var(--text2)"><i class="fa-solid fa-pen-ruler"></i></div>
+    <div class="sc-value">{{ draft_count }}</div>
+    <div class="sc-label">Brouillons</div>
+  </div>
+  {% if subscription %}
+  <div class="stat-card">
+    <div class="sc-icon" style="background:rgba(247,151,30,.1);color:var(--accent4)"><i class="fa-solid fa-credit-card"></i></div>
+    <div class="sc-value">
+      {% if subscription.status == 'trialing' %}{{ request.user.trial_days_left }}j
+      {% else %}<span style="font-size:.9rem">Actif</span>{% endif %}
+    </div>
+    <div class="sc-label">{% if subscription.status == 'trialing' %}Essai restant{% else %}Abonnement{% endif %}</div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- SITES LIST -->
+{% if sites %}
+<div class="section-title animate-fade" style="animation-delay:.1s">
+  <h3>Mes sites</h3>
+  <a href="{% url 'builder:create_step1' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-plus"></i> Nouveau</a>
+</div>
+<div class="sites-grid animate-fade" style="animation-delay:.15s">
+  {% for site in sites %}
+  <div class="site-card">
+    <div class="site-card-header">
+      <div class="site-type-pill site-type-{{ site.site_type }}">
+        {% if site.site_type == 'portfolio' %}<i class="fa-solid fa-user-tie"></i>
+        {% elif site.site_type == 'ecommerce' %}<i class="fa-solid fa-store"></i>
+        {% elif site.site_type == 'eshop' %}<i class="fa-solid fa-shopping-bag"></i>
+        {% elif site.site_type == 'eart' %}<i class="fa-solid fa-palette"></i>
+        {% else %}<i class="fa-solid fa-newspaper"></i>{% endif %}
+        {{ site.get_site_type_display }}
+      </div>
+      <span class="badge badge-{{ site.status }}">{{ site.get_status_display }}</span>
+    </div>
+    <h3 class="site-name">{{ site.name }}</h3>
+    <div class="site-url">
+      <i class="fa-solid fa-link"></i>
+      <span>{{ site.url }}</span>
+    </div>
+    <div class="site-meta">
+      <span><i class="fa-regular fa-calendar"></i> {{ site.created_at|date:"d M Y" }}</span>
+      <span><i class="fa-solid fa-layer-group"></i> {{ site.pages.count }} page{{ site.pages.count|pluralize }}</span>
+    </div>
+    <div class="site-actions">
+      <a href="{% url 'builder:editor' site.id %}" class="btn btn-primary btn-sm">
+        <i class="fa-solid fa-pen-to-square"></i> Éditer
+      </a>
+      <a href="{% url 'dashboard:site_detail' site.id %}" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-sliders"></i> Gérer
+      </a>
+      {% if site.status == 'published' %}
+      <a href="{{ site.url }}" target="_blank" class="btn btn-ghost btn-sm">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- CREATE NEW CARD -->
+  <a href="{% url 'builder:create_step1' %}" class="site-card site-card-new">
+    <div class="new-card-inner">
+      <div class="new-card-icon"><i class="fa-solid fa-plus"></i></div>
+      <h3>Créer un nouveau site</h3>
+      <p>Portfolio, boutique, blog et plus</p>
+    </div>
+  </a>
+</div>
+
+{% else %}
+<!-- EMPTY STATE -->
+<div class="empty-state animate-fade" style="animation-delay:.1s">
+  <div class="empty-icon"><i class="fa-solid fa-rocket"></i></div>
+  <h2>Créez votre premier site</h2>
+  <p>Choisissez un type de site et un template pour commencer. C'est simple, rapide et gratuit pendant 21 jours.</p>
+  <div class="empty-actions">
+    <a href="{% url 'builder:create_step1' %}" class="btn btn-primary btn-lg">
+      <i class="fa-solid fa-plus"></i> Créer mon premier site
+    </a>
+  </div>
+  <div class="empty-types">
+    <div class="et-item"><i class="fa-solid fa-user-tie" style="color:#6c63ff"></i> Portfolio</div>
+    <div class="et-item"><i class="fa-solid fa-store" style="color:#43e97b"></i> E-Commerce</div>
+    <div class="et-item"><i class="fa-solid fa-shopping-bag" style="color:#f7971e"></i> E-Shop</div>
+    <div class="et-item"><i class="fa-solid fa-palette" style="color:#ff6584"></i> E-Art</div>
+    <div class="et-item"><i class="fa-solid fa-newspaper" style="color:#58a6ff"></i> Blog</div>
+  </div>
+</div>
+{% endif %}
+
+{% if subscription and subscription.status == 'trialing' %}
+<div class="trial-cta-bar animate-fade" style="animation-delay:.2s">
+  <div class="tcb-left">
+    <i class="fa-solid fa-bolt"></i>
+    <div>
+      <strong>Il vous reste {{ request.user.trial_days_left }} jours d'essai gratuit</strong>
+      <span>Activez votre abonnement pour continuer après la période d'essai</span>
+    </div>
+  </div>
+  <a href="{% url 'billing:subscribe' %}" class="btn btn-primary">Activer mon abonnement</a>
+</div>
+{% endif %}
+
+<style>
+.welcome-banner { display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,rgba(108,99,255,.08),rgba(255,101,132,.04)); border:1px solid rgba(108,99,255,.15); border-radius:var(--radius); padding:28px 32px; margin-bottom:28px; flex-wrap:wrap; gap:16px; }
+.welcome-banner h2 { font-size:1.4rem; margin-bottom:4px; }
+.welcome-banner p { color:var(--text2); font-size:.9rem; }
+.stats-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:16px; margin-bottom:32px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; display:flex; flex-direction:column; gap:8px; }
+.sc-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1rem; }
+.sc-value { font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; line-height:1; }
+.sc-label { font-size:.8rem; color:var(--text2); }
+.section-title { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.section-title h3 { font-size:1.1rem; }
+.sites-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:20px; margin-bottom:32px; }
+.site-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; display:flex; flex-direction:column; gap:12px; transition:all .2s; }
+.site-card:hover { border-color:var(--border2); box-shadow:var(--shadow); transform:translateY(-2px); }
+.site-card-header { display:flex; align-items:center; justify-content:space-between; }
+.site-type-pill { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:100px; font-size:.75rem; font-weight:600; }
+.site-type-portfolio { background:rgba(108,99,255,.12); color:#6c63ff; }
+.site-type-ecommerce { background:rgba(67,233,123,.12); color:#43e97b; }
+.site-type-eshop { background:rgba(247,151,30,.12); color:#f7971e; }
+.site-type-eart { background:rgba(255,101,132,.12); color:#ff6584; }
+.site-type-blog { background:rgba(88,166,255,.12); color:#58a6ff; }
+.site-name { font-size:1rem; font-weight:700; }
+.site-url { display:flex; align-items:center; gap:6px; font-size:.8rem; color:var(--muted); overflow:hidden; }
+.site-url span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.site-meta { display:flex; gap:16px; font-size:.78rem; color:var(--text2); }
+.site-meta span { display:flex; align-items:center; gap:4px; }
+.site-actions { display:flex; gap:8px; margin-top:4px; }
+.site-card-new { border-style:dashed; background:transparent; cursor:pointer; align-items:center; justify-content:center; min-height:220px; }
+.site-card-new:hover { background:rgba(108,99,255,.04); border-color:rgba(108,99,255,.4); }
+.new-card-inner { text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px; }
+.new-card-icon { width:52px; height:52px; border-radius:50%; background:rgba(108,99,255,.1); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:1.3rem; }
+.new-card-inner h3 { font-size:.95rem; }
+.new-card-inner p { font-size:.82rem; color:var(--text2); }
+.empty-state { text-align:center; padding:80px 32px; }
+.empty-icon { width:72px; height:72px; border-radius:50%; background:rgba(108,99,255,.1); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 24px; }
+.empty-state h2 { font-size:1.6rem; margin-bottom:12px; }
+.empty-state p { color:var(--text2); max-width:420px; margin:0 auto 32px; }
+.empty-types { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:28px; }
+.et-item { display:flex; align-items:center; gap:6px; padding:8px 14px; background:var(--surface); border:1px solid var(--border); border-radius:100px; font-size:.82rem; color:var(--text2); }
+.trial-cta-bar { display:flex; align-items:center; justify-content:space-between; background:rgba(247,151,30,.06); border:1px solid rgba(247,151,30,.2); border-radius:var(--radius); padding:20px 28px; gap:16px; flex-wrap:wrap; }
+.tcb-left { display:flex; align-items:center; gap:14px; }
+.tcb-left i { font-size:1.3rem; color:var(--accent4); }
+.tcb-left strong { display:block; margin-bottom:2px; }
+.tcb-left span { font-size:.85rem; color:var(--text2); }
+</style>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Connexion — SiteForge{% endblock %}
+{% block body %}
+<div class="auth-page">
+  <div class="auth-left">
+    <a href="/" class="logo">Site<span>Forge</span></a>
+    <div class="auth-promo">
+      <h2>Créez votre présence en ligne en quelques minutes</h2>
+      <div class="auth-features">
+        <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Éditeur no-code drag & drop</div>
+        <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Domaine personnalisé inclus</div>
+        <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Sites illimités</div>
+        <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> 21 jours gratuits</div>
+      </div>
+    </div>
+    <div class="auth-types">
+      <div class="at-item at-portfolio">Portfolio</div>
+      <div class="at-item at-ecommerce">E-Commerce</div>
+      <div class="at-item at-blog">Blog</div>
+      <div class="at-item at-art">E-Art</div>
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="auth-box">
+      <h1>Bon retour 👋</h1>
+      <p class="auth-sub">Connectez-vous à votre compte SiteForge</p>
+      {% if form.errors %}
+      <div class="alert alert-error"><i class="fa-solid fa-circle-xmark"></i> Email ou mot de passe incorrect.</div>
+      {% endif %}
+      <form method="post" class="auth-form">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Adresse email</label>
+          {{ form.username }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          {{ form.password }}
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg w-full">Se connecter</button>
+      </form>
+      <p class="auth-switch">Pas encore de compte ? <a href="{% url 'accounts:register' %}">Créer un compte gratuitement</a></p>
+    </div>
+  </div>
+</div>
+{% include 'auth_style.html' %}
+{% endblock %}

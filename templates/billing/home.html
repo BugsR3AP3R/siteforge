@@ -1,0 +1,189 @@
+{% extends 'dashboard/base.html' %}
+{% block title %}Facturation — SiteForge{% endblock %}
+{% block page_title %}Facturation{% endblock %}
+
+{% block content %}
+<div class="billing-grid animate-fade">
+  <!-- SUBSCRIPTION STATUS -->
+  <div class="billing-main">
+    {% if subscription %}
+    <div class="sub-card">
+      <div class="sub-card-header">
+        <div class="sub-status-icon {% if subscription.status == 'trialing' %}trial{% elif subscription.is_active %}active{% else %}inactive{% endif %}">
+          {% if subscription.status == 'trialing' %}<i class="fa-solid fa-hourglass-half"></i>
+          {% elif subscription.is_active %}<i class="fa-solid fa-circle-check"></i>
+          {% else %}<i class="fa-solid fa-circle-xmark"></i>{% endif %}
+        </div>
+        <div>
+          <h3>{{ subscription.get_status_display }}</h3>
+          <p>Plan {% if subscription.plan == 'monthly' %}mensuel{% else %}annuel{% endif %}
+            {% if subscription.status == 'trialing' %}— {{ request.user.trial_days_left }} jours restants{% endif %}
+          </p>
+        </div>
+        <span class="badge badge-{% if subscription.status == 'trialing' %}trial{% elif subscription.is_active %}active{% else %}danger{% endif %}">
+          {{ subscription.get_status_display }}
+        </span>
+      </div>
+
+      {% if subscription.status == 'trialing' %}
+      <div class="trial-progress">
+        <div class="tp-bar">
+          <div class="tp-fill" style="width:{{ request.user.trial_days_left|floatformat:0 }}%"></div>
+        </div>
+        <div class="tp-labels">
+          <span>{{ request.user.trial_days_left }} jours restants</span>
+          <span>21 jours au total</span>
+        </div>
+      </div>
+      <a href="{% url 'billing:subscribe' %}" class="btn btn-primary btn-lg w-full">
+        <i class="fa-solid fa-bolt"></i> Activer mon abonnement maintenant
+      </a>
+      {% elif subscription.is_active %}
+      <div class="sub-details">
+        <div class="sd-item">
+          <span>Prix</span>
+          <strong>{{ subscription.monthly_price }}€/mois</strong>
+        </div>
+        <div class="sd-item">
+          <span>Sites actifs</span>
+          <strong>{{ request.user.sites.count }} site{{ request.user.sites.count|pluralize }}</strong>
+        </div>
+      </div>
+      <button onclick="if(confirm('Annuler votre abonnement ?')) document.getElementById('cancelForm').submit()" class="btn btn-ghost btn-sm" style="color:var(--danger)">
+        <i class="fa-solid fa-ban"></i> Annuler l'abonnement
+      </button>
+      <form id="cancelForm" method="post" action="{% url 'billing:cancel' %}" style="display:none">{% csrf_token %}</form>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="no-sub">
+      <i class="fa-solid fa-lock"></i>
+      <h3>Aucun abonnement actif</h3>
+      <p>Souscrivez pour créer et publier vos sites web</p>
+      <a href="{% url 'billing:subscribe' %}" class="btn btn-primary btn-lg">Voir les offres</a>
+    </div>
+    {% endif %}
+
+    <!-- INVOICES -->
+    {% if invoices %}
+    <div class="invoices-section">
+      <h4>Historique de facturation</h4>
+      <div class="invoices-list">
+        {% for invoice in invoices %}
+        <div class="invoice-item">
+          <div class="inv-info">
+            <span class="inv-date">{{ invoice.created_at|date:"d M Y" }}</span>
+            <span class="inv-id">{{ invoice.stripe_invoice_id|default:"—" }}</span>
+          </div>
+          <div class="inv-amount">{{ invoice.amount }}€</div>
+          <span class="badge badge-{% if invoice.status == 'paid' %}active{% else %}draft{% endif %}">{{ invoice.status }}</span>
+          {% if invoice.invoice_pdf %}
+          <a href="{{ invoice.invoice_pdf }}" class="btn btn-ghost btn-sm" target="_blank"><i class="fa-solid fa-download"></i></a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- PLANS SIDEBAR -->
+  <div class="billing-sidebar">
+    <div class="plans-card">
+      <h4>Changer de plan</h4>
+      <div class="plan-opt {% if subscription and subscription.plan == 'monthly' %}selected{% endif %}">
+        <div class="plan-opt-header">
+          <div>
+            <strong>Mensuel</strong>
+            <span>Flexible, sans engagement</span>
+          </div>
+          <div class="plan-price">9,99€<span>/mois</span></div>
+        </div>
+        {% if not subscription or subscription.plan != 'monthly' %}
+        <form method="post" action="{% url 'billing:subscribe' %}">
+          {% csrf_token %}<input type="hidden" name="plan" value="monthly">
+          <button type="submit" class="btn btn-secondary btn-sm w-full">Passer au mensuel</button>
+        </form>
+        {% else %}
+        <div class="plan-current"><i class="fa-solid fa-check-circle"></i> Plan actuel</div>
+        {% endif %}
+      </div>
+      <div class="plan-opt {% if subscription and subscription.plan == 'yearly' %}selected{% endif %}">
+        <div class="plan-best">✨ Meilleure valeur</div>
+        <div class="plan-opt-header">
+          <div>
+            <strong>Annuel</strong>
+            <span>Économisez 24€/an</span>
+          </div>
+          <div class="plan-price">7,99€<span>/mois</span></div>
+        </div>
+        {% if not subscription or subscription.plan != 'yearly' %}
+        <form method="post" action="{% url 'billing:subscribe' %}">
+          {% csrf_token %}<input type="hidden" name="plan" value="yearly">
+          <button type="submit" class="btn btn-primary btn-sm w-full">Passer à l'annuel</button>
+        </form>
+        {% else %}
+        <div class="plan-current"><i class="fa-solid fa-check-circle"></i> Plan actuel</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="features-card">
+      <h4>Inclus dans votre abonnement</h4>
+      <div class="feat-list">
+        <div class="fl-item"><i class="fa-solid fa-check" style="color:var(--success)"></i> Sites illimités</div>
+        <div class="fl-item"><i class="fa-solid fa-check" style="color:var(--success)"></i> Domaines personnalisés</div>
+        <div class="fl-item"><i class="fa-solid fa-check" style="color:var(--success)"></i> Éditeur drag & drop</div>
+        <div class="fl-item"><i class="fa-solid fa-check" style="color:var(--success)"></i> Hébergement inclus</div>
+        <div class="fl-item"><i class="fa-solid fa-check" style="color:var(--success)"></i> SSL automatique</div>
+        <div class="fl-item"><i class="fa-solid fa-check" style="color:var(--success)"></i> Support prioritaire</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.billing-grid { display:grid; grid-template-columns:1fr 320px; gap:24px; max-width:900px; }
+.sub-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:28px; display:flex; flex-direction:column; gap:20px; margin-bottom:20px; }
+.sub-card-header { display:flex; align-items:center; gap:16px; }
+.sub-status-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
+.sub-status-icon.trial { background:rgba(247,151,30,.12); color:var(--accent4); }
+.sub-status-icon.active { background:rgba(46,213,115,.12); color:var(--success); }
+.sub-status-icon.inactive { background:rgba(255,71,87,.12); color:var(--danger); }
+.sub-card-header div { flex:1; }
+.sub-card-header h3 { font-size:1rem; margin-bottom:2px; }
+.sub-card-header p { font-size:.85rem; color:var(--text2); }
+.trial-progress { }
+.tp-bar { height:8px; background:var(--surface2); border-radius:4px; overflow:hidden; margin-bottom:6px; }
+.tp-fill { height:100%; background:linear-gradient(90deg,var(--accent4),var(--accent)); border-radius:4px; }
+.tp-labels { display:flex; justify-content:space-between; font-size:.75rem; color:var(--text2); }
+.sub-details { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.sd-item { background:var(--surface2); border-radius:var(--radius-sm); padding:14px; }
+.sd-item span { font-size:.78rem; color:var(--text2); display:block; margin-bottom:4px; }
+.sd-item strong { font-size:1rem; font-family:'Syne',sans-serif; }
+.no-sub { text-align:center; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:48px 28px; margin-bottom:20px; }
+.no-sub i { font-size:2rem; color:var(--border2); margin-bottom:16px; display:block; }
+.no-sub h3 { margin-bottom:8px; }
+.no-sub p { color:var(--text2); margin-bottom:24px; }
+.invoices-section h4 { font-size:.95rem; margin-bottom:14px; }
+.invoices-list { display:flex; flex-direction:column; gap:8px; }
+.invoice-item { display:flex; align-items:center; gap:12px; padding:14px 16px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); }
+.inv-info { flex:1; display:flex; flex-direction:column; }
+.inv-date { font-size:.85rem; font-weight:500; }
+.inv-id { font-size:.75rem; color:var(--muted); }
+.inv-amount { font-weight:700; font-family:'Syne',sans-serif; }
+.plans-card, .features-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+.plans-card h4, .features-card h4 { font-size:.9rem; margin-bottom:16px; color:var(--text2); text-transform:uppercase; letter-spacing:.04em; font-size:.75rem; }
+.plan-opt { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; margin-bottom:12px; position:relative; }
+.plan-opt.selected { border-color:rgba(108,99,255,.4); background:rgba(108,99,255,.04); }
+.plan-best { position:absolute; top:-10px; right:12px; background:var(--accent); color:#fff; font-size:.68rem; font-weight:700; padding:3px 10px; border-radius:100px; }
+.plan-opt-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.plan-opt-header strong { display:block; font-size:.9rem; }
+.plan-opt-header span { font-size:.78rem; color:var(--text2); }
+.plan-price { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; text-align:right; }
+.plan-price span { font-size:.75rem; color:var(--text2); font-weight:400; font-family:'DM Sans',sans-serif; }
+.plan-current { font-size:.82rem; color:var(--success); display:flex; align-items:center; gap:6px; }
+.feat-list { display:flex; flex-direction:column; gap:8px; }
+.fl-item { display:flex; align-items:center; gap:8px; font-size:.85rem; color:var(--text2); }
+@media(max-width:768px) { .billing-grid { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
