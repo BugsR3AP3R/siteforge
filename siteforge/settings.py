@@ -4,10 +4,9 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ─── SÉCURITÉ ────────────────────────────────────────────────────────────────
+# ─── SÉCURITÉ ─────────────────────────────────────────────────────────────────
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-remplacez-cette-cle-en-production')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
-
 ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
@@ -32,7 +31,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',          # ← WhiteNoise juste après Security
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -65,7 +64,6 @@ WSGI_APPLICATION = 'siteforge.wsgi.application'
 # ─── BASE DE DONNÉES ──────────────────────────────────────────────────────────
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
-    # Production : PostgreSQL sur Render
     DATABASES = {
         'default': dj_database_url.parse(
             DATABASE_URL,
@@ -74,7 +72,6 @@ if DATABASE_URL:
         )
     }
 else:
-    # Développement local : SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -93,35 +90,30 @@ AUTH_PASSWORD_VALIDATORS = [
      'OPTIONS': {'min_length': 8}},
 ]
 
-# ─── FICHIERS STATIQUES (WhiteNoise) ─────────────────────────────────────────
+# ─── STATIQUES ────────────────────────────────────────────────────────────────
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-# WhiteNoise : compression + cache en production
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# ─── MÉDIAS ───────────────────────────────────────────────────────────────────
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ─── STRIPE ───────────────────────────────────────────────────────────────────
-STRIPE_PUBLIC_KEY  = os.environ.get('STRIPE_PUBLIC_KEY', 'pk_test_xxx')
-STRIPE_SECRET_KEY  = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_xxx')
+STRIPE_PUBLIC_KEY     = os.environ.get('STRIPE_PUBLIC_KEY', 'pk_test_xxx')
+STRIPE_SECRET_KEY     = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_xxx')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', 'whsec_xxx')
-MONTHLY_PRICE_ID   = os.environ.get('MONTHLY_PRICE_ID', 'price_xxx')
-YEARLY_PRICE_ID    = os.environ.get('YEARLY_PRICE_ID', 'price_xxx')
+MONTHLY_PRICE_ID      = os.environ.get('MONTHLY_PRICE_ID', 'price_xxx')
+YEARLY_PRICE_ID       = os.environ.get('YEARLY_PRICE_ID', 'price_xxx')
 
 # ─── DIVERS ───────────────────────────────────────────────────────────────────
-TRIAL_DAYS = int(os.environ.get('TRIAL_DAYS', 21))
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+TRIAL_DAYS       = int(os.environ.get('TRIAL_DAYS', 21))
+EMAIL_BACKEND    = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'noreply@siteforge.io'
-MAIN_DOMAIN = os.environ.get('MAIN_DOMAIN', 'siteforge.io')
+MAIN_DOMAIN      = os.environ.get('MAIN_DOMAIN', 'localhost:8000')
 
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
-
-# Autoriser l'iframe dans l'éditeur (même domaine)
-X_FRAME_OPTIONS = 'SAMEORIGIN'
+SESSION_ENGINE   = 'django.contrib.sessions.backends.db'
+MESSAGE_STORAGE  = 'django.contrib.messages.storage.session.SessionStorage'
+X_FRAME_OPTIONS  = 'SAMEORIGIN'
