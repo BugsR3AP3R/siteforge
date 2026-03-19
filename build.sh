@@ -7,6 +7,12 @@ pip install -r requirements.txt
 echo "==> Collecte des fichiers statiques..."
 python manage.py collectstatic --noinput
 
+echo "==> Création des migrations..."
+python manage.py makemigrations accounts
+python manage.py makemigrations billing
+python manage.py makemigrations builder
+python manage.py makemigrations dashboard
+
 echo "==> Application des migrations..."
 python manage.py migrate
 
